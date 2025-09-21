@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Degenify</title>
+  <meta name="description"
+    content="Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Degenify Design System - Gen Z Minimalist Aesthetic */
+    :root {
+      /* Base colors */
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+
+      /* Purple theme - enhanced for slicker look */
+      --primary: 267 83% 58%;
+      /* Vibrant purple */
+      --primary-foreground: 0 0% 100%;
+      --primary-light: 267 83% 70%;
+      --primary-dark: 267 83% 45%;
+      --primary-glow: 267 83% 65%;
+
+      /* Secondary purple tones */
+      --secondary: 267 30% 97%;
+      --secondary-foreground: 267 83% 25%;
+
+      /* Accent colors - enhanced */
+      --accent: 280 100% 70%;
+      /* Pink-purple accent */
+      --accent-foreground: 0 0% 100%;
+      --accent-secondary: 290 100% 75%;
+      /* Additional accent */
+
+      /* Neutral tones - refined */
+      --muted: 220 14.3% 95.9%;
+      --muted-foreground: 220 8.9% 46.1%;
+
+      /* UI elements - enhanced */
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 240 10% 3.9%;
+      --border: 267 20% 90%;
+      --input: 267 15% 92%;
+      --ring: 267 83% 58%;
+
+      /* Status colors */
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+
+      /* Enhanced gradients for slicker look */
+      --gradient-primary: linear-gradient(135deg, hsl(267 83% 58%), hsl(280 100% 70%), hsl(290 100% 75%));
+      --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(267 15% 98%));
+      --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(267 20% 97%) 100%);
+      --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(267 83% 58% / 0.1));
+      --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(267 83% 58% / 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, hsl(280 100% 70% / 0.3) 0%, transparent 50%);
+
+      /* Enhanced shadows */
+      --shadow-soft: 0 4px 20px hsl(267 83% 58% / 0.15);
+      --shadow-glow: 0 0 40px hsl(267 83% 58% / 0.4);
+      --shadow-card: 0 12px 40px hsl(240 10% 3.9% / 0.1);
+      --shadow-intense: 0 20px 60px hsl(267 83% 58% / 0.25);
+
+      /* Animation properties - enhanced */
+      --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      --transition-glass: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+      --radius: 1rem;
+      /* More generous radius for modern look */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--gradient-mesh);
+      color: hsl(var(--foreground));
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Enhanced button variants */
+    .btn-degenify {
+      background: var(--gradient-primary);
+      color: hsl(var(--primary-foreground));
+      font-weight: 700;
+      padding: 1.5rem 3rem;
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow-intense);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+      font-size: 1.25rem;
+      height: 4rem;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .btn-degenify:hover {
+      box-shadow: var(--shadow-glow);
+      transform: scale(1.05);
+    }
+
+    .btn-degenify:active {
+      transform: scale(0.95);
+    }
+
+    .btn-degenify:disabled {
+      opacity: 0.6;
+      cursor: pointer;
+      transform: none;
+    }
+
+    .btn-degenify::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transform: translateX(-100%) skewX(12deg);
+      transition: transform 0.7s;
+    }
+
+    .btn-degenify:hover::before {
+      transform: translateX(100%);
+    }
+
+    .btn-secondary {
+      background: hsl(var(--secondary) / 0.8);
+      backdrop-filter: blur(4px);
+      color: hsl(var(--secondary-foreground));
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid hsl(var(--border) / 0.5);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      font-size: 0.875rem;
+    }
+
+    .btn-secondary:hover {
+      background: hsl(var(--primary) / 0.1);
+      border-color: hsl(var(--primary) / 0.3);
+      box-shadow: var(--shadow-soft);
+      transform: scale(1.05);
+    }
+
+    /* Enhanced input styles */
+    .input-degenify {
+      width: 100%;
+      padding: 1.5rem 2rem;
+      background: hsl(var(--card) / 0.8);
+      backdrop-filter: blur(4px);
+      border: 2px solid hsl(var(--border) / 0.5);
+      border-radius: 1.5rem;
+      color: hsl(var(--foreground));
+      font-size: 1.25rem;
+      font-weight: 500;
+      min-height: 140px;
+      resize: none;
+      transition: var(--transition-smooth);
+      box-shadow: var(--shadow-card);
+    }
+
+    .input-degenify::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .input-degenify:focus {
+      outline: none;
+      border-color: hsl(var(--primary));
+      box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2);
+    }
+
+    .input-degenify:hover {
+      box-shadow: var(--shadow-soft);
+    }
+
+    /* Enhanced card styles */
+    .card-degenify {
+      background: hsl(var(--card) / 0.9);
+      backdrop-filter: blur(4px);
+      border: 1px solid hsl(var(--border) / 0.3);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: var(--shadow-card);
+      transition: var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-degenify:hover {
+      box-shadow: var(--shadow-intense);
+      transform: scale(1.02);
+      border-color: hsl(var(--primary) / 0.2);
+    }
+
+    .card-glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow-intense);
+      transition: var(--transition-smooth);
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-glass:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .card-glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .card-glass:hover::before {
+      opacity: 0.1;
+    }
+
+    /* Loading animation enhanced */
+    .hat-spin {
+      animation: hatSpinEnhanced 2s ease-in-out infinite;
+    }
+
+    .hat-pulse {
+      animation: hatPulseEnhanced 1.5s ease-in-out infinite;
+    }
+
+    /* Utilities */
+    .text-gradient {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+
+    .bg-gradient-degenify {
+      background: var(--gradient-primary);
+    }
+
+    .bg-gradient-subtle {
+      background: var(--gradient-subtle);
+    }
+
+    .bg-gradient-mesh {
+      background: var(--gradient-mesh);
+    }
+
+    .shadow-glow {
+      box-shadow: var(--shadow-glow);
+    }
+
+    .shadow-intense {
+      box-shadow: var(--shadow-intense);
+    }
+
+    .shadow-soft {
+      box-shadow: var(--shadow-soft);
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Gallery styles - matching GitHub exactly */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .gallery-item {
+      position: relative;
+      transition: var(--transition-smooth);
+    }
+
+    .gallery-item:hover {
+      transform: scale(1.02);
+    }
+
+    .gallery-image-container {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-intense);
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 16rem;
+      object-fit: cover;
+      transition: var(--transition-smooth);
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.1);
+    }
+
+    /* Hover Overlay - matching GitHub exactly */
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .gallery-item:hover .gallery-overlay {
+      opacity: 1;
+    }
+
+    .gallery-overlay-content {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+    }
+
+    .gallery-prompt {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.4;
+      margin: 0.75rem 0 0 0;
+      word-break: break-word;
+    }
+
+    .gallery-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gallery-action-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .gallery-action-btn {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .gallery-action-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .gallery-download-btn {
+      background: hsl(var(--primary) / 0.8);
+      backdrop-filter: blur(4px);
+      border: 1px solid hsl(var(--primary));
+      color: white;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+    }
+
+    .gallery-download-btn:hover {
+      background: hsl(var(--primary));
+    }
+
+
+    .loading {
+      text-align: center;
+      color: hsl(var(--muted-foreground));
+      margin: 2rem 0;
+    }
+
+    /* Animations */
+    @keyframes hatSpinEnhanced {
+
+      0%,
+      100% {
+        transform: rotate(0deg) scale(1);
+        filter: hue-rotate(0deg);
+      }
+
+      25% {
+        transform: rotate(90deg) scale(1.15);
+        filter: hue-rotate(45deg);
+      }
+
+      50% {
+        transform: rotate(180deg) scale(1.3);
+        filter: hue-rotate(90deg);
+      }
+
+      75% {
+        transform: rotate(270deg) scale(1.15);
+        filter: hue-rotate(135deg);
+      }
+    }
+
+    @keyframes hatPulseEnhanced {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+        filter: brightness(1);
+      }
+
+      50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+        filter: brightness(1.3);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.8s ease-out;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+
+    .header {
+      padding: 1rem 0 0.5rem;
+      text-align: center;
+    }
+
+    .main {
+      padding: 0.5rem 0;
+      text-align: center;
+    }
+
+    .footer {
+      padding: 2rem 0;
+      text-align: center;
+      border-top: 1px solid hsl(var(--border) / 0.3);
+    }
+
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .example-btn {
+      background: hsl(var(--secondary) / 0.8);
+      backdrop-filter: blur(4px);
+      color: hsl(var(--secondary-foreground));
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid hsl(var(--border) / 0.5);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      font-size: 0.875rem;
+    }
+
+    .example-btn:hover {
+      background: hsl(var(--primary) / 0.1);
+      border-color: hsl(var(--primary) / 0.3);
+      box-shadow: var(--shadow-soft);
+      transform: scale(1.05);
+    }
+
+    .char-count {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      font-weight: 500;
+    }
+
+    .hint {
+      display: block;
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+    }
+
+    .text-left {
+      text-align: left;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .logo-text-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .logo-text-container img {
+      vertical-align: middle;
+      transform: translateY(-2px);
+    }
+
+    .sparkles {
+      animation: spin 1s linear infinite;
+    }
+
+    /* Share Modal Styles */
+    .share-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .share-modal {
+      background: white;
+      border-radius: 1rem;
+      padding: 0;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .share-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1.5rem 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .share-modal-header h3 {
+      margin: 0;
+      color: #1f2937;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .share-modal-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+
+    .share-modal-close:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #1f2937;
+    }
+
+    .share-modal-content {
+      padding: 1.5rem;
+    }
+
+    .share-modal-content p {
+      margin: 0 0 1rem 0;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .share-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .share-option-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      color: #1f2937;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      text-align: left;
+    }
+
+    .share-option-btn:hover {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .share-option-btn svg {
+      flex-shrink: 0;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 0;
+    }
+
+    .loading-hat {
+      width: 5rem;
+      height: 5rem;
+      animation: hatSpinEnhanced 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.5));
+    }
+
+    .loading-text {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+
+    .loading-text h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+      margin: 0 0 0.5rem 0;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .loading-text p {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      margin: 0;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .result-image {
+      max-width: 100%;
+      border-radius: 1rem;
+      box-shadow: var(--shadow-intense);
+      margin-top: 2rem;
+      transition: var(--transition-smooth);
+    }
+
+    .result-image:hover {
+      transform: scale(1.02);
+    }
+
+    .empty-gallery {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .empty-gallery h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .empty-gallery p {
+      font-size: 0.875rem;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="min-h-screen bg-gradient-mesh">
+    <!-- Header -->
+    <header class="header text-center">
+      <div class="container text-center">
+        <div class="flex flex-col items-center justify-center space-y-2 animate-fade-in">
+
+          <h1 class="text-3xl font-bold text-gradient logo-text-container">
+            <img src="/hat-logo.png" alt="Degenify"
+              class="drop-shadow-lg hover:scale-110 transition-transform duration-300"
+              style="width: 48px; height: 48px;" />
+            <span>Degenify</span>
+          </h1>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Generator Section -->
+    <main class="main text-center">
+      <div class="container text-center">
+        <div class="text-center mb-2 animate-slide-up">
+          <h2 class="text-2xl font-bold text-foreground mb-2 text-center">
+            Make any situation degenerate
+          </h2>
+          <p class="text-muted-foreground text-center">
+            Describe what you want and watch the magic happen
+          </p>
+        </div>
+
+        <!-- Generator Form -->
+        <div class="w-full max-w-4xl mx-auto">
+          <div id="generator-form" class="space-y-8 animate-fade-in">
+            <!-- Main Generator Card -->
+            <div class="card-degenify relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-mesh opacity-30"></div>
+              <div class="relative space-y-6">
+                <div class="space-y-4">
+                  <textarea id="prompt"
+                    placeholder="Describe any wild situation... (e.g., 'riding a dragon through neon city')"
+                    class="input-degenify" maxlength="500"></textarea>
+
+                  <div class="flex justify-between items-center text-sm mb-4">
+
+                    <span class="hint text-right">
+                      ⚡ Press Enter to generate
+                    </span>
+                  </div>
+                </div>
+
+                <button id="generate-btn" class="btn-degenify group relative overflow-hidden">
+                  <div class="flex items-center justify-center space-x-3 relative z-10">
+                    <span class="sparkles">✨</span>
+                    <span class="font-bold">Degenify 🎩</span>
+                    <span class="sparkles">✨</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Examples -->
+            <div class="space-y-4">
+              <p class="text-center text-muted-foreground font-medium text-center">
+                🔥 Popular vibes:
+              </p>
+              <div class="examples">
+                <button class="example-btn" data-prompt="surfing massive waves">🏄‍♂️ surfing massive waves</button>
+                <button class="example-btn" data-prompt="performing on stage">🎸 performing on stage</button>
+                <button class="example-btn" data-prompt="exploring space">🚀 exploring space</button>
+                <button class="example-btn" data-prompt="being a chef">🍳 being a chef</button>
+                <button class="example-btn" data-prompt="climbing mountains">🏔️ climbing mountains</button>
+                <button class="example-btn" data-prompt="in a video game">🎮 in a video game</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div id="loading-state" class="loading-container" style="display: none;">
+            <img src="/hat-logo.png" alt="Degenify Hat" class="loading-hat" style="width: 80px; height: 80px;" />
+            <div class="loading-text">
+              <h3>✨ Degenifying your situation... ✨</h3>
+              <p>This is about to be absolutely fire 🔥</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Image -->
+        <div id="result-container" class="text-center" style="display: none;">
+          <img id="result-image" class="result-image" alt="Generated image" />
+        </div>
+
+        <!-- Gallery Section -->
+        <section class="py-16">
+          <div class="text-center mb-20">
+            <h1 class="text-3xl font-bold text-gradient">
+              Epic Degenerations
+            </h1>
+            <p class="text-xl text-muted-foreground max-w-2xl mx-auto text-center mb-8">
+              The community is going absolutely wild with these generations 🔥
+            </p>
+          </div>
+
+          <div id="gallery" class="gallery"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <p class="text-sm text-muted-foreground">
+          Made with 💜 for the degen community
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module">
+    const generateBtn = document.getElementById('generate-btn');
+    const promptInput = document.getElementById('prompt');
+    const charCount = document.getElementById('char-count');
+    const generatorForm = document.getElementById('generator-form');
+    const loadingState = document.getElementById('loading-state');
+    const resultContainer = document.getElementById('result-container');
+    const resultImage = document.getElementById('result-image');
+    const gallery = document.getElementById('gallery');
+
+    // Character count update and button state
+    promptInput.addEventListener('input', () => {
+      const count = promptInput.value.length;
+      charCount.textContent = `${count}/500 characters`;
+
+      // Enable/disable button based on input
+      generateBtn.disabled = count === 0;
+    });
+
+    // Example button handlers
+    document.querySelectorAll('.example-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.dataset.prompt;
+        promptInput.value = prompt;
+        charCount.textContent = `${prompt.length}/500 characters`;
+        generateBtn.disabled = false; // Enable button when example is selected
+        promptInput.focus();
+      });
+    });
+
+    // Enter key handler
+    promptInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        generateImage();
+      }
+    });
+
+    // Generate button handler
+    generateBtn.addEventListener('click', generateImage);
+
+    async function generateImage() {
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+
+      // Show loading state
+      generatorForm.style.display = 'none';
+      loadingState.style.display = 'flex';
+      resultContainer.style.display = 'none';
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Failed' }));
+          throw new Error(error.error || response.status);
+        }
+
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        resultImage.src = imageUrl;
+        resultContainer.style.display = 'block';
+
+        // Reload gallery to show new image
+        await loadGallery();
+
+      } catch (error) {
+        alert('Failed: ' + error.message);
+      } finally {
+        // Hide loading state
+        loadingState.style.display = 'none';
+        generatorForm.style.display = 'block';
+        promptInput.value = '';
+        charCount.textContent = '0/500 characters';
+      }
+    }
+
+    // Load gallery on page load
+    async function loadGallery() {
+      try {
+        const response = await fetch('/api/gallery');
+        const images = await response.json();
+        displayGallery(images);
+      } catch (error) {
+        console.error('Failed to load gallery:', error);
+        displayGallery([]);
+      }
+    }
+
+    // Display gallery images - matching GitHub design exactly
+    function displayGallery(images) {
+      gallery.innerHTML = '';
+
+      if (images.length === 0) {
+        gallery.innerHTML = `
+          <div class="empty-gallery">
+            <h3>No images generated yet</h3>
+            <p>Create your first meme above! 🎩</p>
+          </div>
+        `;
+        return;
+      }
+
+      images.forEach((img, index) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.style.animationDelay = `${index * 0.1}s`;
+        item.innerHTML = `
+          <div class="card-glass">
+            <div class="gallery-image-container">
+              <img src="data:image/png;base64,${img.imageData}" alt="${img.prompt}"/>
+              <div class="gallery-overlay">
+                <div class="gallery-overlay-content">
+                  <div class="gallery-actions">
+                    <div class="gallery-action-group">
+                      <button class="gallery-action-btn" onclick="handleShare('${img.id}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 1 1 0-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 1 1 5.367-2.684 3 3 0 0 1-5.367 2.684zm0 9.316a3 3 0 1 1 5.367 2.684 3 3 0 0 1-5.367-2.684z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <button class="gallery-download-btn" onclick="downloadImage('${img.id}')">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="gallery-prompt">${img.prompt}</p>
+          </div>
+        `;
+        gallery.appendChild(item);
+      });
+    }
+
+    // Download image function - make it globally accessible
+    window.downloadImage = function (imageId) {
+      fetch(`/api/download/${imageId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Download failed');
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `meme-${imageId}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+          console.error('Download error:', error);
+          alert('Download failed: ' + error.message);
+        });
+    };
+
+    // Handle like function - make it globally accessible
+    window.handleLike = function (imageId) {
+      console.log('Liked image:', imageId);
+      // Add like functionality here if needed
+    };
+
+    // Handle share function - make it globally accessible
+    window.handleShare = function (imageId) {
+      showShareModal(imageId);
+    };
+
+    // Show share modal with X and Farcaster options
+    function showShareModal(imageId) {
+      // Create modal overlay
+      const modal = document.createElement('div');
+      modal.className = 'share-modal-overlay';
+      modal.innerHTML = `
+        <div class="share-modal">
+          <div class="share-modal-header">
+            <h3>Share this creation</h3>
+            <button class="share-modal-close" onclick="closeShareModal()">&times;</button>
+          </div>
+          <div class="share-modal-content">
+            <p>Choose where to share:</p>
+            <div class="share-options">
+              <button class="share-option-btn" onclick="shareToX('${imageId}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                Share on X
+              </button>
+              <button class="share-option-btn" onclick="shareToFarcaster('${imageId}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Share on Farcaster
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      // Lock body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+
+      // Close modal when clicking overlay
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeShareModal();
+        }
+      });
+    }
+
+    // Close share modal - make globally accessible
+    window.closeShareModal = function () {
+      // Remove ONLY share modals, not gallery overlays
+      const shareModals = document.querySelectorAll('.share-modal-overlay');
+      shareModals.forEach(modal => modal.remove());
+
+      // Reset body scroll only
+      document.body.style.overflow = '';
+
+      // Don't touch other overlays or gallery elements
+    };
+
+    // Share to X (Twitter) - make globally accessible
+    window.shareToX = function (imageId) {
+      const imageUrl = `${window.location.origin}/api/download/${imageId}`;
+      const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN @degentokenbase`;
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(imageUrl)}`;
+      window.open(twitterUrl, '_blank');
+      // Close modal immediately
+      closeShareModal();
+    };
+
+    // Share to Farcaster - make globally accessible
+    window.shareToFarcaster = function (imageId) {
+      const imageUrl = `${window.location.origin}/api/download/${imageId}`;
+      const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN /degen`;
+      const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text + ' ' + imageUrl)}`;
+      window.open(farcasterUrl, '_blank');
+      // Close modal immediately
+      closeShareModal();
+    };
+
+    // Global cleanup function for emergencies
+    window.forceCleanup = function () {
+      // Remove ALL modals and overlays
+      const allModals = document.querySelectorAll('[class*="modal"], [class*="overlay"]');
+      allModals.forEach(el => el.remove());
+
+      // Reset everything
+      document.body.style.cssText = '';
+      document.documentElement.style.cssText = '';
+
+      console.log('Force cleanup completed');
+    };
+
+    // Initialize button state
+    generateBtn.disabled = true;
+
+    // Load gallery on page load
+    loadGallery();
+  </script>
+</body>
+
+</html>
