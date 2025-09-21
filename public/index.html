@@ -339,6 +339,14 @@
       opacity: 1;
     }
 
+    /* Mobile: Always show overlay on touch devices */
+    @media (hover: none) and (pointer: coarse) {
+      .gallery-overlay {
+        opacity: 1;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3), transparent);
+      }
+    }
+
     .gallery-overlay-content {
       position: absolute;
       bottom: 1rem;
@@ -404,6 +412,29 @@
 
     .gallery-download-btn:hover {
       background: hsl(var(--primary));
+    }
+
+    /* Mobile: Make buttons larger and more touch-friendly */
+    @media (hover: none) and (pointer: coarse) {
+      .gallery-action-btn {
+        padding: 0.75rem;
+        min-width: 44px;
+        min-height: 44px;
+        width: auto;
+        height: auto;
+      }
+      
+      .gallery-download-btn {
+        padding: 0.75rem;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      
+      .gallery-action-btn svg,
+      .gallery-download-btn svg {
+        width: 20px;
+        height: 20px;
+      }
     }
 
 
@@ -1173,7 +1204,7 @@
 
     // Initialize button state
     generateBtn.disabled = true;
-    
+
     // Check if there's already text in the input (fallback)
     if (promptInput.value.length > 0) {
       generateBtn.disabled = false;
