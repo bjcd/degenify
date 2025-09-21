@@ -826,7 +826,9 @@
                     class="input-degenify" maxlength="500"></textarea>
 
                   <div class="flex justify-between items-center text-sm mb-4">
-
+                    <span id="char-count" class="char-count">
+                      0/500 characters
+                    </span>
                     <span class="hint text-right">
                       ⚡ Press Enter to generate
                     </span>
@@ -917,6 +919,7 @@
 
       // Enable/disable button based on input
       generateBtn.disabled = count === 0;
+      console.log('Input changed, count:', count, 'disabled:', generateBtn.disabled);
     });
 
     // Example button handlers
@@ -1170,6 +1173,11 @@
 
     // Initialize button state
     generateBtn.disabled = true;
+    
+    // Check if there's already text in the input (fallback)
+    if (promptInput.value.length > 0) {
+      generateBtn.disabled = false;
+    }
 
     // Load gallery on page load
     loadGallery();
