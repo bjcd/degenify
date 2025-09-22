@@ -1316,9 +1316,21 @@ ${shareUrl}`;
           window.location.hostname.includes('farcaster') ||
           document.title.includes('Farcaster') ||
           window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
+          window.location.hash.includes('farcaster') ||
+          // Additional mobile-specific checks
+          window.navigator.userAgent.includes('Mobile') && window.farcaster ||
+          window.navigator.userAgent.includes('iPhone') && window.farcaster ||
+          window.navigator.userAgent.includes('Android') && window.farcaster;
 
-      console.log('🔍 Sharing context check:', { isInFarcaster });
+      console.log('🔍 Sharing context check:', { 
+        isInFarcaster,
+        isIframe: window.location !== window.parent.location,
+        userAgent: window.navigator.userAgent,
+        referrer: document.referrer,
+        hostname: window.location.hostname,
+        hasFarcasterSDK: !!window.farcaster,
+        isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
+      });
 
       if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
         console.log('🎯 Using Farcaster SDK - in miniapp context');
@@ -1442,20 +1454,36 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // Show "Add to Home Screen" button only when in Farcaster context and SDK is available
-      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-      const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
+        // Show "Add to Home Screen" button only when in Farcaster context and SDK is available
+        const buttonIsInFarcaster = window.location !== window.parent.location || 
+            window.navigator.userAgent.includes('Farcaster') || 
+            (document.referrer && document.referrer.includes('farcaster')) ||
+            window.location.hostname.includes('farcaster') ||
+            document.title.includes('Farcaster') ||
+            window.location.search.includes('farcaster') ||
+            window.location.hash.includes('farcaster') ||
+            // Additional mobile-specific checks
+            window.navigator.userAgent.includes('Mobile') && window.farcaster ||
+            window.navigator.userAgent.includes('iPhone') && window.farcaster ||
+            window.navigator.userAgent.includes('Android') && window.farcaster;
 
-      console.log('🔍 Button check:', { isInFarcaster, sdkAvailable });
-
-      if (addToFarcasterBtn && isInFarcaster && sdkAvailable) {
-        addToFarcasterBtn.style.display = 'inline-flex';
-        addToFarcasterBtn.style.alignItems = 'center';
-        console.log('✅ Showing Add to Home Screen button - in Farcaster with SDK');
-      } else if (addToFarcasterBtn) {
-        addToFarcasterBtn.style.display = 'none';
-        console.log('❌ Hiding Add to Home Screen button - not in Farcaster or no SDK');
-      }
+        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+        const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
+        
+        console.log('🔍 Button check:', { 
+          buttonIsInFarcaster, 
+          sdkAvailable,
+          isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
+        });
+        
+        if (addToFarcasterBtn && buttonIsInFarcaster && sdkAvailable) {
+          addToFarcasterBtn.style.display = 'inline-flex';
+          addToFarcasterBtn.style.alignItems = 'center';
+          console.log('✅ Showing Add to Home Screen button - in Farcaster with SDK');
+        } else if (addToFarcasterBtn) {
+          addToFarcasterBtn.style.display = 'none';
+          console.log('❌ Hiding Add to Home Screen button - not in Farcaster or no SDK');
+        }
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
