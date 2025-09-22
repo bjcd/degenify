@@ -866,11 +866,23 @@ app.get('/api/download/:id', async (req, res) => {
 
         const image = result.rows[0];
 
-        // Redirect to Cloudinary URL for download
-        res.redirect(image.cloudinary_url);
+        // Fetch the image from Cloudinary and serve it directly with download headers
+        const response = await fetch(image.cloudinary_url);
+        if (!response.ok) {
+            return res.status(404).json({ error: 'Image not found on Cloudinary' });
+        }
+
+        // Set headers for direct download
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Content-Disposition', `attachment; filename="meme-${imageId}.png"`);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+        
+        // Stream the image data directly to the response
+        const buffer = Buffer.from(await response.arrayBuffer());
+        res.send(buffer);
     } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ error: 'Database error' });
+        console.error('Download error:', err);
+        res.status(500).json({ error: 'Download failed' });
     }
 });
 

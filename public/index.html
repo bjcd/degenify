@@ -1209,7 +1209,7 @@
       if (context.isFarcasterMiniapp) {
         console.log('🔽 MINIAPP: Opening download URL directly (navigation-based)');
         const downloadUrl = `${window.location.origin}/api/download/${imageId}`;
-        
+
         // Try to open in new tab/window - miniapp should handle this
         try {
           window.open(downloadUrl, '_blank');
@@ -1221,7 +1221,7 @@
         }
         return;
       }
-      
+
       // WEBSITE: Use traditional programmatic download (direct to Downloads folder)
       console.log('🔽 WEBSITE: Using programmatic download (blob + link.click)');
       fetch(`/api/download/${imageId}`)
@@ -1357,6 +1357,8 @@ $DEGEN @degentokenbase`;
       console.log('- shouldUseSDK:', shouldUseSDK);
       console.log('- shouldShowButton:', shouldShowButton);
       console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
+      console.log('- window.farcaster:', window.farcaster);
+      console.log('- window.farcaster.actions:', window.farcaster?.actions);
 
       return {
         isMobile,
@@ -1382,7 +1384,8 @@ $DEGEN /degen
 Create yours on www.degenify.xyz`;
 
       const context = window.detectFarcasterContext();
-      console.log('🔍 FIXED CONTEXT:', context);
+      console.log('🔍 SHARE CONTEXT:', context);
+      console.log('🔍 SHARE: isFarcasterMiniapp =', context.isFarcasterMiniapp);
 
       // MINIAPP: Use native SDK sharing, WEBSITE: Use browser fallback
       if (context.isFarcasterMiniapp) {
