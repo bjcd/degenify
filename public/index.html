@@ -1204,12 +1204,12 @@
     window.downloadImage = function (imageId) {
       const context = window.detectFarcasterContext();
       console.log('🔽 Download attempt in context:', context);
-      
-      // MINIAPP CONTEXT: Use direct navigation instead of programmatic download
-      if (context.hasSDK || context.isInFarcaster) {
+
+      // FARCASTER MINIAPP ONLY: Use direct navigation instead of programmatic download
+      if (context.hasSDK && context.isInFarcaster) {
         console.log('🔽 MINIAPP: Opening download URL directly');
         const downloadUrl = `${window.location.origin}/api/download/${imageId}`;
-        
+
         // Try to open in new tab/window - miniapp should handle this
         try {
           window.open(downloadUrl, '_blank');
@@ -1221,7 +1221,7 @@
         }
         return;
       }
-      
+
       // REGULAR BROWSER: Use programmatic download
       console.log('🔽 BROWSER: Using programmatic download');
       fetch(`/api/download/${imageId}`)
