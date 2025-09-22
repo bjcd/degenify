@@ -1340,18 +1340,25 @@ ${shareUrl}`;
     if (isInFarcaster) {
       document.body.style.backgroundColor = '#ffffff';
       document.documentElement.style.backgroundColor = '#ffffff';
-      
-      // Load Farcaster SDK and call ready()
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@farcaster/miniapp-sdk@latest/dist/index.js';
-      script.onload = () => {
-        if (window.farcaster && window.farcaster.actions) {
-          window.farcaster.actions.ready();
-        }
-      };
-      document.head.appendChild(script);
     }
 
+  </script>
+
+  <!-- Farcaster Mini App SDK -->
+  <script type="module">
+    // Check if we're in Farcaster context
+    const isInFarcaster = window.location !== window.parent.location || 
+        window.navigator.userAgent.includes('Farcaster') || 
+        document.referrer.includes('farcaster');
+    
+    if (isInFarcaster) {
+      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+        // Call ready() after the app is fully loaded
+        sdk.actions.ready();
+      }).catch(error => {
+        console.error('Failed to load Farcaster SDK:', error);
+      });
+    }
   </script>
 </body>
 
