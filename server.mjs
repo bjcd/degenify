@@ -139,6 +139,20 @@ app.get('/api/gallery', (req, res) => {
     res.json(sortedImages);
 });
 
+// API endpoint to serve image directly (for social media previews)
+app.get('/api/image/:id', (req, res) => {
+    const imageId = req.params.id;
+    const image = generatedImages.find(img => img.id == imageId);
+
+    if (!image) {
+        return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const imageBuffer = Buffer.from(image.imageData, 'base64');
+    res.setHeader('Content-Type', 'image/png');
+    res.send(imageBuffer);
+});
+
 // API endpoint to download a specific image
 app.get('/api/download/:id', (req, res) => {
     const imageId = req.params.id;
