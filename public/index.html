@@ -1348,7 +1348,7 @@ ${shareUrl}`;
         console.log('SDK actions available:', Object.keys(window.farcaster.actions));
         console.log('composeCast function:', typeof window.farcaster.actions.composeCast);
         console.log('Full SDK object:', window.farcaster);
-        
+
         if (window.farcaster.actions.composeCast) {
           console.log('📱 MOBILE: Attempting composeCast...');
           try {
@@ -1357,7 +1357,7 @@ ${shareUrl}`;
               embeds: [shareUrl]
             });
             console.log('📱 composeCast result:', result);
-            
+
             if (result && typeof result.then === 'function') {
               result.then(() => {
                 console.log('✅ Mobile SDK sharing successful');
