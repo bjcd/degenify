@@ -779,8 +779,8 @@ app.get('/api/share/:id', async (req, res) => {
         // Share to Farcaster
         function shareToFarcaster(imageId) {
             const shareUrl = window.location.origin + '/api/share/' + imageId;
-            const text = 'Check out this epic degeneration I created with Degenify! 🎩 🔥 \\nCreate yours on ' + window.location.origin + '\\n\\n$DEGEN \\n/degen';
-            const farcasterUrl = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(text + ' ' + shareUrl);
+            const text = 'Check out this epic degeneration I created with Degenify! 🎩 🔥 \\nCreate yours on degenify[dot]xyz\\n\\n$DEGEN \\n/degen \\n\\n' + shareUrl;
+            const farcasterUrl = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(text);
             window.open(farcasterUrl, '_blank');
             closeShareModal();
         }

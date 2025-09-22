@@ -1199,11 +1199,13 @@ $DEGEN @degentokenbase`;
     window.shareToFarcaster = function (imageId) {
       const shareUrl = `${window.location.origin}/api/share/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 
-Create yours on ${window.location.origin}
+Create yours on degenify[dot]xyz
 
 $DEGEN 
-/degen`;
-      const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text + ' ' + shareUrl)}`;
+/degen 
+
+${shareUrl}`;
+      const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
       window.open(farcasterUrl, '_blank');
       // Close modal immediately
       closeShareModal();
