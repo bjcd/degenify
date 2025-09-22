@@ -211,7 +211,8 @@ app.get('/api/share/:id', async (req, res) => {
 
         const image = result.rows[0];
         const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${imageId}`;
-        const cloudinaryUrl = image.cloudinary_url;
+        // Add cache-busting parameter to force Farcaster to refresh image cache
+        const cloudinaryUrl = `${image.cloudinary_url}?t=${Date.now()}`;
         
         const html = `
 <!DOCTYPE html>
@@ -233,6 +234,8 @@ app.get('/api/share/:id', async (req, res) => {
     <meta property="og:image:height" content="1024">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:alt" content="Epic Degeneration by Degenify">
+    <meta property="og:site_name" content="Degenify">
+    <meta property="og:locale" content="en_US">
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
@@ -243,14 +246,6 @@ app.get('/api/share/:id', async (req, res) => {
     <meta name="twitter:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
     <meta name="twitter:image" content="${cloudinaryUrl}">
     <meta name="twitter:image:alt" content="Epic Degeneration by Degenify">
-    
-    <!-- Farcaster specific -->
-    <meta property="fc:frame" content="vNext">
-    <meta property="fc:frame:image" content="${cloudinaryUrl}">
-    <meta property="fc:frame:image:aspect_ratio" content="1:1">
-    <meta property="fc:frame:button:1" content="View on Degenify">
-    <meta property="fc:frame:button:1:action" content="link">
-    <meta property="fc:frame:button:1:target" content="${req.protocol}://${req.get('host')}">
     
     <!-- Additional meta tags for better compatibility -->
     <meta name="theme-color" content="#667eea">
