@@ -183,8 +183,16 @@ app.get('/api/image/:id', async (req, res) => {
 
         const image = result.rows[0];
 
-        // Redirect to Cloudinary URL for direct image serving
-        res.redirect(image.cloudinary_url);
+        // Fetch image from Cloudinary and serve directly
+        const response = await fetch(image.cloudinary_url);
+        if (!response.ok) {
+            return res.status(404).json({ error: 'Image not found on Cloudinary' });
+        }
+
+        const imageBuffer = await response.arrayBuffer();
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+        res.send(Buffer.from(imageBuffer));
     } catch (err) {
         console.error('Database error:', err);
         res.status(500).json({ error: 'Database error' });
