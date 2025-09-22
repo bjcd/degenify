@@ -1314,11 +1314,15 @@ $DEGEN @degentokenbase`;
 
       // FIXED: Show button and use SDK whenever SDK is available (mobile or desktop miniapp)
       const shouldUseSDK = hasSDK && hasComposeCast;
-      
+
       // IMPORTANT: Only show button in actual Farcaster context (not regular website)
-      const isInFarcaster = window.location !== window.parent.location || 
-                           window.navigator.userAgent.includes('Farcaster') ||
-                           (document.referrer && document.referrer.includes('farcaster'));
+      // More robust detection for mobile miniapp
+      const isIframe = window.location !== window.parent.location;
+      const hasUserAgent = window.navigator.userAgent.includes('Farcaster');
+      const hasReferrer = document.referrer && document.referrer.includes('farcaster');
+      const hasSDKLoaded = !!window.farcaster; // If SDK loads, we're likely in Farcaster
+      
+      const isInFarcaster = isIframe || hasUserAgent || hasReferrer || hasSDKLoaded;
       const shouldShowButton = hasSDK && hasAddMiniApp && isInFarcaster;
 
       console.log('🔍 FIXED DETECTION:');
@@ -1326,6 +1330,10 @@ $DEGEN @degentokenbase`;
       console.log('- hasSDK:', hasSDK);
       console.log('- hasComposeCast:', hasComposeCast);
       console.log('- hasAddMiniApp:', hasAddMiniApp);
+      console.log('- isIframe:', isIframe);
+      console.log('- hasUserAgent:', hasUserAgent);
+      console.log('- hasReferrer:', hasReferrer);
+      console.log('- hasSDKLoaded:', hasSDKLoaded);
       console.log('- isInFarcaster:', isInFarcaster);
       console.log('- shouldUseSDK:', shouldUseSDK);
       console.log('- shouldShowButton:', shouldShowButton);
