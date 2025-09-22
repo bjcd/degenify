@@ -22,6 +22,7 @@
         "sharing",
         "gallery"
     ],
+    "splashBackgroundColor": "#e8d3f4",
     "accountAssociation": {
         "header": "eyJmaWQiOjE3MDY0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MjUxMzk5NkZENzNBNmZCNDQ2YTZBNmRhNDE1NEVjNTAzZURhYjhEMiJ9",
         "payload": "eyJkb21haW4iOiJ3d3cuZGVnZW5pZnkueHl6In0",

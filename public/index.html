@@ -1333,8 +1333,15 @@ ${shareUrl}`;
       });
 
       // Smart approach: Only try SDK if we have strong indicators we're in Farcaster
-      const strongFarcasterIndicators = isInFarcaster || 
-          (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent) && window.farcaster);
+      const isMobile = /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent);
+      const strongFarcasterIndicators = isInFarcaster || (isMobile && window.farcaster);
+
+      console.log('🔍 Strong indicators check:', {
+        isInFarcaster,
+        isMobile,
+        hasSDK: !!window.farcaster,
+        strongFarcasterIndicators
+      });
 
       if (strongFarcasterIndicators && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
         console.log('🎯 Using Farcaster SDK - strong indicators present');
