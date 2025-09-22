@@ -96,3 +96,4 @@ npm start
 
 MIT License - feel free to use this project!
 # Force redeploy Mon Sep 22 12:38:32 CEST 2025
+# Force Railway redeploy Mon Sep 22 13:10:10 CEST 2025
