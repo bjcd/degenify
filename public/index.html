@@ -84,7 +84,7 @@
       --destructive-foreground: 210 40% 98%;
 
       /* Enhanced gradients for slicker look */
-      --gradient-mesh: linear-gradient(0deg, rgba(255, 255, 255, 0.06) 2%, rgba(255, 255, 255, 0.03) 7%, rgba(139, 59, 237, 0.05) 12%, rgba(204, 102, 255, 0.08) 100%);
+      --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(267 83% 58% / 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, hsl(280 100% 70% / 0.3) 0%, transparent 50%);
       --gradient-primary: linear-gradient(135deg, hsl(267 83% 58%), hsl(280 100% 70%), hsl(290 100% 75%));
       --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(267 15% 98%));
       --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(267 20% 97%) 100%);
@@ -848,7 +848,7 @@
 </head>
 
 <body>
-  <div class="min-h-screen bg-gradient-mesh">
+  <div class="min-h-screen">
     <!-- Header -->
     <header class="header text-center">
       <div class="container text-center">
@@ -881,7 +881,7 @@
           <div id="generator-form" class="space-y-8 animate-fade-in">
             <!-- Main Generator Card -->
             <div class="card-degenify relative overflow-hidden">
-              <div class="absolute inset-0 bg-gradient-mesh opacity-30"></div>
+              <div class="absolute inset-0 opacity-30"></div>
               <div class="relative space-y-6">
                 <div class="space-y-4">
                   <textarea id="prompt"
@@ -960,6 +960,12 @@
           </div>
 
           <div id="gallery" class="gallery"></div>
+
+          <!-- Loading indicator for infinite scroll -->
+          <div id="loadingIndicator" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+            <p class="text-muted-foreground mt-2">Loading more generations...</p>
+          </div>
         </section>
       </div>
     </main>
@@ -1056,23 +1062,38 @@
       }
     }
 
+    // Gallery pagination variables
+    let allImages = [];
+    let currentOffset = 0;
+    const imagesPerLoad = 12;
+    let isLoading = false;
+
     // Load gallery on page load
     async function loadGallery() {
       try {
+        console.log('Loading gallery...');
         const response = await fetch('/api/gallery');
-        const images = await response.json();
-        displayGallery(images);
+        console.log('Gallery response status:', response.status);
+        const data = await response.json();
+        console.log('Gallery data:', data);
+        // The API returns the array directly, not wrapped in an object
+        allImages = Array.isArray(data) ? data : (data.images || []);
+        console.log('All images loaded:', allImages.length);
+        currentOffset = 0;
+        displayGallery();
       } catch (error) {
         console.error('Failed to load gallery:', error);
-        displayGallery([]);
+        allImages = [];
+        displayGallery();
       }
     }
 
-    // Display gallery images - matching GitHub design exactly
-    function displayGallery(images) {
+    // Display gallery images with pagination
+    function displayGallery() {
+      console.log('Displaying gallery, allImages length:', allImages.length);
       gallery.innerHTML = '';
 
-      if (images.length === 0) {
+      if (allImages.length === 0) {
         gallery.innerHTML = `
           <div class="empty-gallery">
             <h3>No images generated yet</h3>
@@ -1082,7 +1103,11 @@
         return;
       }
 
-      images.forEach((img, index) => {
+      // Show all images up to current offset + load amount
+      const imagesToShow = allImages.slice(0, currentOffset + imagesPerLoad);
+      console.log('Showing', imagesToShow.length, 'of', allImages.length, 'images');
+
+      imagesToShow.forEach((img, index) => {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         item.style.animationDelay = `${index * 0.1}s`;
@@ -1119,6 +1144,44 @@
         `;
         gallery.appendChild(item);
       });
+    }
+
+    // Infinite scroll functions
+    function loadMoreImages() {
+      if (isLoading || currentOffset + imagesPerLoad >= allImages.length) {
+        return;
+      }
+
+      isLoading = true;
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+
+      // Simulate loading delay for better UX
+      setTimeout(() => {
+        currentOffset += imagesPerLoad;
+        displayGallery();
+        isLoading = false;
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+      }, 500);
+    }
+
+    // Intersection Observer for infinite scroll
+    function setupInfiniteScroll() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && currentOffset + imagesPerLoad < allImages.length) {
+            loadMoreImages();
+          }
+        });
+      }, {
+        rootMargin: '100px'
+      });
+
+      // Observe the loading indicator
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      if (loadingIndicator) {
+        observer.observe(loadingIndicator);
+      }
     }
 
     // Download image function - make it globally accessible
@@ -1266,32 +1329,17 @@ ${shareUrl}`;
     // Load gallery on page load
     loadGallery();
 
-    // Farcaster Mini App Integration
-    // Check if we're in Farcaster context before loading SDK
-    const isInFarcaster = window.location !== window.parent.location ||
-      window.navigator.userAgent.includes('Farcaster') ||
-      document.referrer.includes('farcaster');
+    // Setup infinite scroll
+    setupInfiniteScroll();
 
-    console.log('Farcaster detection:', {
-      isInFarcaster,
-      isIframe: window.location !== window.parent.location,
-      userAgent: window.navigator.userAgent.includes('Farcaster'),
-      referrer: document.referrer.includes('farcaster'),
-      referrerValue: document.referrer
-    });
-
-    if (isInFarcaster) {
-      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-        // Hide splash screen and show app
-        sdk.actions.ready();
-
-        console.log('Degenify loaded as Farcaster Mini App');
-      }).catch(err => {
-        console.log('Farcaster SDK failed to load:', err);
-      });
-    } else {
-      console.log('Not in Farcaster context, using original design');
+    // Farcaster Mini App - white background
+    if (window.location !== window.parent.location || 
+        window.navigator.userAgent.includes('Farcaster') || 
+        document.referrer.includes('farcaster')) {
+      document.body.style.backgroundColor = '#ffffff';
+      document.documentElement.style.backgroundColor = '#ffffff';
     }
+
   </script>
 </body>
 
