@@ -73,11 +73,24 @@ app.post('/api/generate', async (req, res) => {
 
         const url = `${GOOGLE_API_BASE}/v1beta/models/${MODEL_ID}:generateContent`;
 
+        // Enhanced prompt to ensure purple hat preservation
+        const enhancedPrompt = `You are an image editor. You must ALWAYS preserve the purple hat from the base image character. 
+        
+Instructions:
+1. Keep the distinctive PURPLE HAT from the base image character
+2. The character can change poses, expressions, and clothing to fit the situation
+3. The character can be dressed differently for the new context
+4. Only modify the background, setting, or environment around the character
+5. Place the character in the new situation described: ${prompt}
+6. The purple hat must remain visible and distinctive
+
+Situation to create: ${prompt}`;
+
         const requestBody = {
             contents: [
                 {
                     parts: [
-                        { text: prompt },
+                        { text: enhancedPrompt },
                         {
                             inlineData: {
                                 mimeType: 'image/png',
