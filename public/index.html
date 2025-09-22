@@ -1314,13 +1314,19 @@ $DEGEN @degentokenbase`;
 
       // FIXED: Show button and use SDK whenever SDK is available (mobile or desktop miniapp)
       const shouldUseSDK = hasSDK && hasComposeCast;
-      const shouldShowButton = hasSDK && hasAddMiniApp;
+      
+      // IMPORTANT: Only show button in actual Farcaster context (not regular website)
+      const isInFarcaster = window.location !== window.parent.location || 
+                           window.navigator.userAgent.includes('Farcaster') ||
+                           (document.referrer && document.referrer.includes('farcaster'));
+      const shouldShowButton = hasSDK && hasAddMiniApp && isInFarcaster;
 
       console.log('🔍 FIXED DETECTION:');
       console.log('- isMobile:', isMobile);
       console.log('- hasSDK:', hasSDK);
       console.log('- hasComposeCast:', hasComposeCast);
       console.log('- hasAddMiniApp:', hasAddMiniApp);
+      console.log('- isInFarcaster:', isInFarcaster);
       console.log('- shouldUseSDK:', shouldUseSDK);
       console.log('- shouldShowButton:', shouldShowButton);
       console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
@@ -1340,12 +1346,11 @@ $DEGEN @degentokenbase`;
     window.shareToFarcaster = function (imageId) {
       const shareUrl = `${window.location.origin}/api/share/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 
-Create yours on degenify[dot]xyz
 
-$DEGEN 
-/degen 
+${shareUrl}
 
-${shareUrl}`;
+$DEGEN /degen 
+Create yours on degenify.xyz`;
 
       const context = window.detectFarcasterContext();
       console.log('🔍 FIXED CONTEXT:', context);
@@ -1484,42 +1489,42 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-        // FIXED: Show button whenever SDK is available (mobile or desktop miniapp)
-        const updateButtonVisibility = () => {
-          const buttonContext = window.detectFarcasterContext();
-          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-          
-          console.log('🔍 Button context check:', buttonContext);
-          
-          // FIXED: Show button when SDK is available (miniapp context)
-          if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-            addToFarcasterBtn.style.display = 'inline-flex';
-            addToFarcasterBtn.style.alignItems = 'center';
-            console.log('✅ SHOWING Add miniapp button - SDK available');
-          } else if (addToFarcasterBtn) {
-            addToFarcasterBtn.style.display = 'none';
-            console.log('❌ HIDING button - SDK not ready yet');
-          }
-        };
+      // FIXED: Show button whenever SDK is available (mobile or desktop miniapp)
+      const updateButtonVisibility = () => {
+        const buttonContext = window.detectFarcasterContext();
+        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+
+        console.log('🔍 Button context check:', buttonContext);
+
+        // FIXED: Show button when SDK is available (miniapp context)
+        if (addToFarcasterBtn && buttonContext.shouldShowButton) {
+          addToFarcasterBtn.style.display = 'inline-flex';
+          addToFarcasterBtn.style.alignItems = 'center';
+          console.log('✅ SHOWING Add miniapp button - SDK available');
+        } else if (addToFarcasterBtn) {
+          addToFarcasterBtn.style.display = 'none';
+          console.log('❌ HIDING button - SDK not ready yet');
+        }
+      };
 
       // Initial check
       updateButtonVisibility();
 
-        // AGGRESSIVE RETRIES: Check every 200ms for 10 seconds for SDK loading
-        console.log('🔄 Setting up aggressive retry logic for SDK loading');
-        let attempts = 0;
-        const maxAttempts = 50; // 10 seconds / 200ms
-        const retryInterval = setInterval(() => {
-          attempts++;
-          console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
-          updateButtonVisibility();
-          
-          // Stop if SDK is loaded or max attempts reached
-          if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
-            clearInterval(retryInterval);
-            console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
-          }
-        }, 200);
+      // AGGRESSIVE RETRIES: Check every 200ms for 10 seconds for SDK loading
+      console.log('🔄 Setting up aggressive retry logic for SDK loading');
+      let attempts = 0;
+      const maxAttempts = 50; // 10 seconds / 200ms
+      const retryInterval = setInterval(() => {
+        attempts++;
+        console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
+        updateButtonVisibility();
+
+        // Stop if SDK is loaded or max attempts reached
+        if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
+          clearInterval(retryInterval);
+          console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
+        }
+      }, 200);
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
