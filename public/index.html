@@ -1332,7 +1332,7 @@ ${shareUrl}`;
     // Setup infinite scroll
     setupInfiniteScroll();
 
-    // Farcaster Mini App - white background and SDK
+    // Farcaster Mini App - white background and immediate ready() call
     const isInFarcaster = window.location !== window.parent.location || 
         window.navigator.userAgent.includes('Farcaster') || 
         document.referrer.includes('farcaster');
@@ -1340,25 +1340,50 @@ ${shareUrl}`;
     if (isInFarcaster) {
       document.body.style.backgroundColor = '#ffffff';
       document.documentElement.style.backgroundColor = '#ffffff';
+      
+      // Try to call ready() immediately if SDK is already available
+      if (window.farcaster && window.farcaster.actions) {
+        window.farcaster.actions.ready();
+        console.log('Called ready() immediately via window.farcaster');
+      }
     }
 
   </script>
 
   <!-- Farcaster Mini App SDK -->
   <script type="module">
-    // Check if we're in Farcaster context
+    // More robust Farcaster detection
     const isInFarcaster = window.location !== window.parent.location || 
         window.navigator.userAgent.includes('Farcaster') || 
-        document.referrer.includes('farcaster');
+        document.referrer.includes('farcaster') ||
+        window.location.hostname.includes('farcaster') ||
+        document.title.includes('Farcaster');
     
-    if (isInFarcaster) {
-      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-        // Call ready() after the app is fully loaded
+    console.log('Farcaster detection:', {
+      isInFarcaster,
+      isIframe: window.location !== window.parent.location,
+      userAgent: window.navigator.userAgent.includes('Farcaster'),
+      referrer: document.referrer.includes('farcaster'),
+      hostname: window.location.hostname.includes('farcaster'),
+      title: document.title.includes('Farcaster')
+    });
+    
+    // Always try to load SDK and call ready() - let Farcaster handle it
+    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+      console.log('Farcaster SDK loaded successfully');
+      // Call ready() after a short delay to ensure app is fully loaded
+      setTimeout(() => {
         sdk.actions.ready();
-      }).catch(error => {
-        console.error('Failed to load Farcaster SDK:', error);
-      });
-    }
+        console.log('Called sdk.actions.ready()');
+      }, 100);
+    }).catch(error => {
+      console.error('Failed to load Farcaster SDK:', error);
+      // If SDK fails to load, still try to call ready on window.farcaster if it exists
+      if (window.farcaster && window.farcaster.actions) {
+        window.farcaster.actions.ready();
+        console.log('Called ready() via window.farcaster fallback');
+      }
+    });
   </script>
 </body>
 
