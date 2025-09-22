@@ -28,14 +28,20 @@
     content="Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.">
   <meta name="twitter:image" content="https://www.degenify.xyz/miniapp-icon.png">
 
-  <!-- Farcaster Mini App Embed -->
-  <meta name="fc:miniapp"
-    content='{"version":"1","imageUrl":"https://www.degenify.xyz/miniapp-icon.png","button":{"title":"🎩 Degenify","action":{"type":"launch_miniapp","name":"Degenify","url":"https://www.degenify.xyz","splashImageUrl":"https://www.degenify.xyz/miniapp-icon.png","splashBackgroundColor":"#8B5CF6"}}}' />
-  <!-- For backward compatibility -->
-  <meta name="fc:frame"
-    content='{"version":"1","imageUrl":"https://www.degenify.xyz/miniapp-icon.png","button":{"title":"🎩 Degenify","action":{"type":"launch_frame","name":"Degenify","url":"https://www.degenify.xyz","splashImageUrl":"https://www.degenify.xyz/miniapp-icon.png","splashBackgroundColor":"#8B5CF6"}}}' />
-
+  <!-- Farcaster Frame Meta Tags for Rich Cards -->
+  <meta property="fc:frame" content="vNext">
+  <meta property="fc:frame:image" content="https://www.degenify.xyz/miniapp-icon.png">
+  <meta property="fc:frame:image:aspect_ratio" content="1:1">
+  <meta property="fc:frame:button:1" content="Open Degenify">
+  <meta property="fc:frame:button:1:action" content="link">
+  <meta property="fc:frame:button:1:target" content="https://www.degenify.xyz">
+  
+  <!-- Farcaster Mini App Meta Tags -->
+  <meta property="fc:miniapp" content='{"name": "Degenify", "version": "2", "iconUrl": "https://www.degenify.xyz/miniapp-icon.png", "homeUrl": "https://www.degenify.xyz", "imageUrl": "https://www.degenify.xyz/miniapp-icon.png", "buttonTitle": "Open mini app", "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png", "splashBackgroundColor": "#e8d3f4"}'>
+  
+  <!-- Manifest Link -->
   <link rel="manifest" href="/.well-known/farcaster.json">
+
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -867,7 +873,7 @@
               style="margin-right: 8px; vertical-align: middle;">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            Add to Home Screen
+            Add miniapp to Farcaster
           </button>
         </div>
       </div>
@@ -1320,7 +1326,7 @@ $DEGEN @degentokenbase`;
       // MOBILE-FIRST LOGIC: If mobile and SDK exists, always use it
       const shouldUseSDK = isMobile ? hasSDK : (isInFarcasterContext && hasSDK);
       const shouldShowButton = isMobile ? hasAddMiniApp : (isInFarcasterContext && hasAddMiniApp);
-      
+
       // Extra debugging for mobile
       if (isMobile) {
         console.log('📱 MOBILE DETECTED - Extra debugging:');
@@ -1496,33 +1502,33 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-        // Show "Add to Home Screen" button using universal detection
-        const updateButtonVisibility = () => {
-          const buttonContext = window.detectFarcasterContext();
-          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-          
-          console.log('🔍 Button context check:', buttonContext);
-          
-          if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-            addToFarcasterBtn.style.display = 'inline-flex';
-            addToFarcasterBtn.style.alignItems = 'center';
-            console.log('✅ Showing Add to Home Screen button - universal detection says yes');
-          } else if (addToFarcasterBtn) {
-            addToFarcasterBtn.style.display = 'none';
-            console.log('❌ Hiding Add to Home Screen button - universal detection says no');
-          }
-        };
+      // Show "Add to Home Screen" button using universal detection
+      const updateButtonVisibility = () => {
+        const buttonContext = window.detectFarcasterContext();
+        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
 
-        // Initial check
-        updateButtonVisibility();
-        
-        // For mobile, retry button visibility check multiple times in case SDK loads later
-        if (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)) {
-          console.log('📱 Mobile detected - setting up retry logic for button visibility');
-          setTimeout(updateButtonVisibility, 500);
-          setTimeout(updateButtonVisibility, 1000);
-          setTimeout(updateButtonVisibility, 2000);
+        console.log('🔍 Button context check:', buttonContext);
+
+        if (addToFarcasterBtn && buttonContext.shouldShowButton) {
+          addToFarcasterBtn.style.display = 'inline-flex';
+          addToFarcasterBtn.style.alignItems = 'center';
+          console.log('✅ Showing Add to Home Screen button - universal detection says yes');
+        } else if (addToFarcasterBtn) {
+          addToFarcasterBtn.style.display = 'none';
+          console.log('❌ Hiding Add to Home Screen button - universal detection says no');
         }
+      };
+
+      // Initial check
+      updateButtonVisibility();
+
+      // For mobile, retry button visibility check multiple times in case SDK loads later
+      if (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)) {
+        console.log('📱 Mobile detected - setting up retry logic for button visibility');
+        setTimeout(updateButtonVisibility, 500);
+        setTimeout(updateButtonVisibility, 1000);
+        setTimeout(updateButtonVisibility, 2000);
+      }
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
