@@ -14,6 +14,12 @@ const app = express();
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve Farcaster Mini App manifest
+app.get('/.well-known/farcaster.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.join(__dirname, 'public', '.well-known', 'farcaster.json'));
+});
+
 const PORT = process.env.PORT || 3000;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 let MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-image-preview';
