@@ -1308,11 +1308,11 @@ $DEGEN
 /degen 
 
 ${shareUrl}`;
-      
+
       // Check if we're in Farcaster Mini App context and SDK is available
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.compose_cast) {
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
         // Use Farcaster SDK for sharing within Mini App
-        window.farcaster.actions.compose_cast({
+        window.farcaster.actions.composeCast({
           text: text,
           embeds: [shareUrl]
         }).then(() => {
@@ -1422,11 +1422,13 @@ ${shareUrl}`;
 
       // Make SDK globally available
       window.farcaster = sdk;
-      
+
       // Debug: Log available actions
       console.log('Available SDK actions:', Object.keys(sdk.actions || {}));
       console.log('SDK actions object:', sdk.actions);
-      
+      console.log('composeCast available:', !!sdk.actions.composeCast);
+      console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
+
       // Show "Add to Farcaster" button only when SDK is actually available
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
       if (addToFarcasterBtn) {
