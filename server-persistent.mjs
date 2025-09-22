@@ -244,6 +244,20 @@ app.get('/api/share/:id', async (req, res) => {
     <meta name="twitter:image" content="${cloudinaryUrl}">
     <meta name="twitter:image:alt" content="Epic Degeneration by Degenify">
     
+    <!-- Farcaster specific -->
+    <meta property="fc:frame" content="vNext">
+    <meta property="fc:frame:image" content="${cloudinaryUrl}">
+    <meta property="fc:frame:image:aspect_ratio" content="1:1">
+    <meta property="fc:frame:button:1" content="View on Degenify">
+    <meta property="fc:frame:button:1:action" content="link">
+    <meta property="fc:frame:button:1:target" content="${req.protocol}://${req.get('host')}">
+    
+    <!-- Additional meta tags for better compatibility -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <style>
         body { 
             margin: 0; 
