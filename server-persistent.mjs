@@ -222,6 +222,10 @@ app.get('/api/share/:id', async (req, res) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Epic Degeneration by Degenify</title>
     <meta name="description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
+    <link rel="icon" type="image/png" href="/hat-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -254,37 +258,274 @@ app.get('/api/share/:id', async (req, res) => {
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
-        body { 
-            margin: 0; 
-            padding: 20px; 
-            font-family: Arial, sans-serif; 
+        /* Degenify Design System - Gen Z Minimalist Aesthetic */
+        :root {
+            /* Base colors */
+            --background: 0 0% 100%;
+            --foreground: 240 10% 3.9%;
+            --primary: 267 83% 58%;
+            --primary-foreground: 0 0% 100%;
+            --secondary: 267 30% 97%;
+            --secondary-foreground: 267 83% 25%;
+            --accent: 280 100% 70%;
+            --accent-foreground: 0 0% 100%;
+            --muted: 220 14.3% 95.9%;
+            --muted-foreground: 220 8.9% 46.1%;
+            --card: 0 0% 100%;
+            --card-foreground: 240 10% 3.9%;
+            --border: 267 20% 90%;
+            --ring: 267 83% 58%;
+            --radius: 1rem;
+            
+            /* Enhanced gradients */
+            --gradient-primary: linear-gradient(135deg, hsl(267 83% 58%), hsl(280 100% 70%), hsl(290 100% 75%));
+            --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(267 15% 98%));
+            --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(267 83% 58% / 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, hsl(280 100% 70% / 0.3) 0%, transparent 50%);
+            
+            /* Enhanced shadows */
+            --shadow-soft: 0 4px 20px hsl(267 83% 58% / 0.15);
+            --shadow-glow: 0 0 40px hsl(267 83% 58% / 0.4);
+            --shadow-card: 0 12px 40px hsl(240 10% 3.9% / 0.1);
+            --shadow-intense: 0 20px 60px hsl(267 83% 58% / 0.25);
+            
+            /* Animation properties */
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--gradient-mesh);
+            color: hsl(var(--foreground));
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
             text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .header {
+            padding: 1rem 0 0.5rem;
+            text-align: center;
+        }
+
+        .main {
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+
+        .footer {
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid hsl(var(--border) / 0.3);
+        }
+
+        .btn-degenify {
+            background: var(--gradient-primary);
+            color: hsl(var(--primary-foreground));
+            font-weight: 700;
+            padding: 1.5rem 3rem;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-intense);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            font-size: 1.25rem;
+            height: 4rem;
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            margin: 2rem auto;
+        }
+
+        .btn-degenify:hover {
+            box-shadow: var(--shadow-glow);
+            transform: scale(1.05);
+        }
+
+        .btn-degenify:active {
+            transform: scale(0.95);
+        }
+
+        .btn-degenify::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%) skewX(12deg);
+            transition: transform 0.7s;
+        }
+
+        .btn-degenify:hover::before {
+            transform: translateX(100%);
+        }
+
+        .text-gradient {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .logo-text-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .logo-text-container img {
+            vertical-align: middle;
+            transform: translateY(-2px);
+        }
+
+        .result-image {
+            max-width: 100%;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-intense);
+            margin: 2rem 0;
+            transition: var(--transition-smooth);
+        }
+
+        .result-image:hover {
+            transform: scale(1.02);
+        }
+
+        .prompt-overlay {
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .prompt-overlay img {
+            width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: var(--shadow-intense);
+        }
+
+        .prompt-overlay-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2), transparent);
+            padding: 2rem;
+            border-radius: 0 0 1rem 1rem;
+        }
+
+        .prompt-text {
             color: white;
+            font-size: 1.125rem;
+            font-weight: 500;
+            line-height: 1.4;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
-        img { 
-            max-width: 100%; 
-            height: auto; 
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
         }
-        h1 { margin-bottom: 20px; }
-        .prompt { 
-            background: rgba(255,255,255,0.1); 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin: 20px 0;
-            backdrop-filter: blur(10px);
+
+        .animate-slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
-    <h1>🎩 Epic Degeneration by Degenify</h1>
-    <div class="prompt">
-        <strong>Prompt:</strong> ${image.prompt}
+    <div class="min-h-screen bg-gradient-mesh">
+        <!-- Header -->
+        <header class="header text-center">
+            <div class="container text-center">
+                <div class="flex flex-col items-center justify-center space-y-2 animate-fade-in">
+                    <h1 class="text-3xl font-bold text-gradient logo-text-container">
+                        <img src="/hat-logo.png" alt="Degenify"
+                            class="drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                            style="width: 48px; height: 48px;" />
+                        <span>Degenify</span>
+                    </h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main text-center">
+            <div class="container text-center">
+                <div class="text-center mb-2 animate-slide-up">
+                    <h2 class="text-2xl font-bold text-foreground mb-2 text-center">
+                        Epic Degeneration
+                    </h2>
+                    <p class="text-muted-foreground text-center">
+                        Check out this amazing creation! 🎩 🔥
+                    </p>
+                </div>
+
+                <!-- Create Yours Button -->
+                <a href="${req.protocol}://${req.get('host')}" class="btn-degenify group relative overflow-hidden">
+                    <div class="flex items-center justify-center space-x-3 relative z-10">
+                        <span class="sparkles">✨</span>
+                        <span class="font-bold">Create yours now 🎩</span>
+                        <span class="sparkles">✨</span>
+                    </div>
+                </a>
+
+                <!-- Image with Prompt Overlay -->
+                <div class="prompt-overlay">
+                    <img src="${imageUrl}" alt="Epic Degeneration">
+                    <div class="prompt-overlay-content">
+                        <p class="prompt-text">${image.prompt}</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p class="text-sm text-muted-foreground">
+                    Made with 💜 for the degen community
+                </p>
+            </div>
+        </footer>
     </div>
-    <img src="${imageUrl}" alt="Epic Degeneration">
-    <p>Created with Degenify - Transform any situation! 🔥</p>
 </body>
 </html>`;
 
