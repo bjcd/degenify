@@ -1322,14 +1322,14 @@ ${shareUrl}`;
         }).catch(error => {
           console.error('Failed to open cast composer:', error);
           // Fallback to external URL
-          const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
+          const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
           window.open(farcasterUrl, '_blank');
           closeShareModal();
         });
       } else {
         console.log('Using external Farcaster URL');
-        // Regular browser - use external URL
-        const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
+        // Regular browser - use external URL (Warpcast compose)
+        const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
         closeShareModal();
       }
@@ -1432,13 +1432,13 @@ ${shareUrl}`;
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
       // Show "Add to Farcaster" button only when in Farcaster context and SDK is available
-      const isInFarcaster = window.location !== window.parent.location || 
-          window.navigator.userAgent.includes('Farcaster') || 
-          (document.referrer && document.referrer.includes('farcaster')) ||
-          window.location.hostname.includes('farcaster') ||
-          document.title.includes('Farcaster') ||
-          window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
+      const isInFarcaster = window.location !== window.parent.location ||
+        window.navigator.userAgent.includes('Farcaster') ||
+        (document.referrer && document.referrer.includes('farcaster')) ||
+        window.location.hostname.includes('farcaster') ||
+        document.title.includes('Farcaster') ||
+        window.location.search.includes('farcaster') ||
+        window.location.hash.includes('farcaster');
 
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
       if (addToFarcasterBtn && isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp) {
