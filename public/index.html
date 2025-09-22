@@ -8,6 +8,16 @@
   <link rel="icon" type="image/png" href="/hat-logo.png">
   <meta name="description"
     content="Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly." />
+
+  <!-- Farcaster Mini App Meta Tags -->
+  <meta name="farcaster:app" content="true">
+  <meta name="farcaster:app:name" content="Degenify">
+  <meta name="farcaster:app:description"
+    content="Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.">
+  <meta name="farcaster:app:icon" content="https://www.degenify.xyz/miniapp-icon.png">
+  <meta name="farcaster:app:url" content="https://www.degenify.xyz">
+  <link rel="manifest" href="/manifest.json">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1234,6 +1244,21 @@ ${shareUrl}`;
 
     // Load gallery on page load
     loadGallery();
+
+    // Farcaster Mini App Integration
+    // Only load SDK if running in Farcaster context
+    if (window.location !== window.parent.location) {
+      // We're in an iframe (likely Farcaster)
+      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+        // Hide splash screen and show app
+        sdk.actions.ready();
+
+        // Optional: Add Farcaster-specific features
+        console.log('Degenify loaded as Farcaster Mini App');
+      }).catch(err => {
+        console.log('Not in Farcaster context or SDK failed to load:', err);
+      });
+    }
   </script>
 </body>
 
