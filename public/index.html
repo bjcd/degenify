@@ -1418,10 +1418,9 @@ ${shareUrl}`;
       userAgentFull: window.navigator.userAgent
     });
 
-    // Only load SDK if we're in Farcaster context
-    if (isInFarcaster) {
-      console.log('📱 Loading Farcaster SDK - in Farcaster context');
-      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+    // Always try to load SDK - let Farcaster handle the detection
+    console.log('📱 Loading Farcaster SDK - always try');
+    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
         console.log('Farcaster SDK loaded successfully', sdk);
 
         // Make SDK globally available
@@ -1433,29 +1432,29 @@ ${shareUrl}`;
         console.log('composeCast available:', !!sdk.actions.composeCast);
         console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-        // Show "Add to Home Screen" button only when SDK is available (means we're in Farcaster)
+        // Show "Add to Home Screen" button only when in Farcaster context and SDK is available
         const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
         const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
-
-        console.log('🔍 Button check - SDK available:', sdkAvailable);
-
-        if (addToFarcasterBtn && sdkAvailable) {
+        
+        console.log('🔍 Button check:', { isInFarcaster, sdkAvailable });
+        
+        if (addToFarcasterBtn && isInFarcaster && sdkAvailable) {
           addToFarcasterBtn.style.display = 'inline-flex';
           addToFarcasterBtn.style.alignItems = 'center';
-          console.log('✅ Showing Add to Home Screen button - SDK available');
+          console.log('✅ Showing Add to Home Screen button - in Farcaster with SDK');
         } else if (addToFarcasterBtn) {
           addToFarcasterBtn.style.display = 'none';
-          console.log('❌ Hiding Add to Home Screen button - no SDK');
+          console.log('❌ Hiding Add to Home Screen button - not in Farcaster or no SDK');
         }
 
         // Mobile-specific ready() solution - wait for full SDK initialization
         let readyCallCount = 0;
         const maxReadyAttempts = 20;
-        
+
         const waitForSDKAndCallReady = () => {
           readyCallCount++;
           console.log(`🔄 Ready attempt ${readyCallCount}/${maxReadyAttempts}`);
-          
+
           try {
             // Check if SDK is fully initialized
             if (sdk && sdk.actions && typeof sdk.actions.ready === 'function') {
@@ -1469,7 +1468,7 @@ ${shareUrl}`;
           } catch (error) {
             console.log('❌ Ready() call failed:', error);
           }
-          
+
           // If we haven't succeeded and haven't reached max attempts, try again
           if (readyCallCount < maxReadyAttempts) {
             setTimeout(waitForSDKAndCallReady, 200); // Try every 200ms
@@ -1498,22 +1497,19 @@ ${shareUrl}`;
             setTimeout(waitForSDKAndCallReady, 100);
           });
         }
-      }).catch(error => {
-        console.error('Failed to load Farcaster SDK:', error);
-        // If SDK fails to load, still try to call ready on window.farcaster if it exists
-        if (window.farcaster && window.farcaster.actions) {
-          window.farcaster.actions.ready();
-          console.log('Called ready() via window.farcaster fallback');
-        }
-      });
-    } else {
-      console.log('🌐 Not in Farcaster context - skipping SDK load');
-      // Ensure button is hidden in regular browser
-      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-      if (addToFarcasterBtn) {
-        addToFarcasterBtn.style.display = 'none';
-        console.log('❌ Hiding Add to Home Screen button - not in Farcaster');
+    }).catch(error => {
+      console.error('Failed to load Farcaster SDK:', error);
+      // If SDK fails to load, still try to call ready on window.farcaster if it exists
+      if (window.farcaster && window.farcaster.actions) {
+        window.farcaster.actions.ready();
+        console.log('Called ready() via window.farcaster fallback');
       }
+    });
+
+    // Also try calling ready() immediately if SDK is already available (like in working version)
+    if (window.farcaster && window.farcaster.actions) {
+      window.farcaster.actions.ready();
+      console.log('Called ready() immediately via window.farcaster');
     }
   </script>
 </body>
