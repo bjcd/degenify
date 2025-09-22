@@ -199,6 +199,88 @@ app.get('/api/image/:id', async (req, res) => {
     }
 });
 
+// API endpoint to serve image with Open Graph meta tags (for social media previews)
+app.get('/api/share/:id', async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const result = await pool.query('SELECT * FROM images WHERE id = $1', [imageId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send('Image not found');
+        }
+
+        const image = result.rows[0];
+        const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${imageId}`;
+        
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epic Degeneration by Degenify</title>
+    <meta name="description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${req.protocol}://${req.get('host')}/api/share/${imageId}">
+    <meta property="og:title" content="Epic Degeneration by Degenify">
+    <meta property="og:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
+    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="1024">
+    <meta property="og:image:type" content="image/png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="${req.protocol}://${req.get('host')}/api/share/${imageId}">
+    <meta property="twitter:title" content="Epic Degeneration by Degenify">
+    <meta property="twitter:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
+    <meta property="twitter:image" content="${imageUrl}">
+    
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: Arial, sans-serif; 
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        img { 
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 { margin-bottom: 20px; }
+        .prompt { 
+            background: rgba(255,255,255,0.1); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎩 Epic Degeneration by Degenify</h1>
+    <div class="prompt">
+        <strong>Prompt:</strong> ${image.prompt}
+    </div>
+    <img src="${imageUrl}" alt="Epic Degeneration">
+    <p>Created with Degenify - Transform any situation! 🔥</p>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
+});
+
 // API endpoint to download a specific image
 app.get('/api/download/:id', async (req, res) => {
     try {
