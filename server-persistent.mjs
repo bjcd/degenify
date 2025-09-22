@@ -13,7 +13,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 // Serve Farcaster Mini App manifest (must be before static middleware)
 app.get('/.well-known/farcaster.json', (req, res) => {
+  // Add cache-busting headers to force refresh
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"manifest-${Date.now()}"`);
+  
   try {
     // Read and serve the actual file content
     const filePath = path.join(__dirname, 'public', '.well-known', 'farcaster.json');
@@ -27,6 +33,10 @@ app.get('/.well-known/farcaster.json', (req, res) => {
     
     const manifestContent = fs.readFileSync(filePath, 'utf8');
     const manifest = JSON.parse(manifestContent);
+    
+    // Add a timestamp to help with debugging
+    console.log(`Served manifest version ${manifest.frame?.version} at ${new Date().toISOString()}`);
+    
     res.json(manifest);
   } catch (error) {
     console.error('Error serving farcaster.json:', error);
