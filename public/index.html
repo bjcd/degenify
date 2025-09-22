@@ -423,13 +423,13 @@
         width: auto;
         height: auto;
       }
-      
+
       .gallery-download-btn {
         padding: 0.75rem;
         min-width: 44px;
         min-height: 44px;
       }
-      
+
       .gallery-action-btn svg,
       .gallery-download-btn svg {
         width: 20px;
@@ -1045,10 +1045,13 @@
         const item = document.createElement('div');
         item.className = 'gallery-item';
         item.style.animationDelay = `${index * 0.1}s`;
+        // Check if imageData is a URL (Cloudinary) or base64 data
+        const imageSrc = img.imageData.startsWith('http') ? img.imageData : `data:image/png;base64,${img.imageData}`;
+
         item.innerHTML = `
           <div class="card-glass">
             <div class="gallery-image-container">
-              <img src="data:image/png;base64,${img.imageData}" alt="${img.prompt}"/>
+              <img src="${imageSrc}" alt="${img.prompt}"/>
               <div class="gallery-overlay">
                 <div class="gallery-overlay-content">
                   <div class="gallery-actions">
