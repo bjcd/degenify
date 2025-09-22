@@ -1309,8 +1309,30 @@ $DEGEN
 
 ${shareUrl}`;
 
+      // Check if we're in Farcaster Mini App context
+      const isInFarcaster = window.location !== window.parent.location || 
+          window.navigator.userAgent.includes('Farcaster') || 
+          document.referrer.includes('farcaster') ||
+          window.location.hostname.includes('farcaster') ||
+          document.title.includes('Farcaster') ||
+          window.location.search.includes('farcaster') ||
+          window.location.hash.includes('farcaster');
+
+      console.log('Farcaster detection:', {
+        isInFarcaster,
+        isIframe: window.location !== window.parent.location,
+        userAgent: window.navigator.userAgent.includes('Farcaster'),
+        referrer: document.referrer.includes('farcaster'),
+        referrerValue: document.referrer,
+        hostname: window.location.hostname.includes('farcaster'),
+        title: document.title.includes('Farcaster'),
+        search: window.location.search.includes('farcaster'),
+        hash: window.location.hash.includes('farcaster')
+      });
+
       // Check if we're in Farcaster Mini App context and SDK is available
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+      if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('Using Farcaster SDK for sharing');
         // Use Farcaster SDK for sharing within Mini App
         window.farcaster.actions.composeCast({
           text: text,
@@ -1326,7 +1348,8 @@ ${shareUrl}`;
           closeShareModal();
         });
       } else {
-        // Fallback for regular browsers
+        console.log('Using regular browser sharing');
+        // Regular browser - use external URL
         const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
         closeShareModal();
@@ -1429,11 +1452,23 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // Show "Add to Farcaster" button only when SDK is actually available
+      // Show "Add to Farcaster" button only when in Farcaster context and SDK is available
+      const isInFarcaster = window.location !== window.parent.location || 
+          window.navigator.userAgent.includes('Farcaster') || 
+          document.referrer.includes('farcaster') ||
+          window.location.hostname.includes('farcaster') ||
+          document.title.includes('Farcaster') ||
+          window.location.search.includes('farcaster') ||
+          window.location.hash.includes('farcaster');
+
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-      if (addToFarcasterBtn) {
+      if (addToFarcasterBtn && isInFarcaster) {
         addToFarcasterBtn.style.display = 'inline-flex';
         addToFarcasterBtn.style.alignItems = 'center';
+        console.log('Showing Add to Farcaster button - in Farcaster context');
+      } else if (addToFarcasterBtn) {
+        addToFarcasterBtn.style.display = 'none';
+        console.log('Hiding Add to Farcaster button - not in Farcaster context');
       }
 
       // Call ready() after a short delay to ensure app is fully loaded
