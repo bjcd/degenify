@@ -1309,40 +1309,26 @@ $DEGEN
 
 ${shareUrl}`;
 
-      // Check if we're in Farcaster Mini App context
-      const isInFarcaster = window.location !== window.parent.location || 
-          window.navigator.userAgent.includes('Farcaster') || 
-          (document.referrer && document.referrer.includes('farcaster')) ||
-          window.location.hostname.includes('farcaster') ||
-          document.title.includes('Farcaster') ||
-          window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
-
-      console.log('Farcaster context detection:', {
-        isInFarcaster,
-        isIframe: window.location !== window.parent.location,
-        userAgent: window.navigator.userAgent.includes('Farcaster'),
-        referrer: document.referrer,
-        hostname: window.location.hostname,
-        title: document.title
-      });
-
-      if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
-        console.log('Using Farcaster SDK for miniapp sharing');
-        // Farcaster Mini App - use native SDK
+      // Bulletproof approach: Try SDK first, fallback to external URL
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('🎯 Trying Farcaster SDK...');
+        // Try native SDK first (works in miniapp)
         window.farcaster.actions.composeCast({
           text: text,
           embeds: [shareUrl]
         }).then(() => {
-          console.log('Cast composer opened successfully');
+          console.log('✅ SDK sharing successful');
           closeShareModal();
         }).catch(error => {
-          console.error('Failed to open cast composer:', error);
+          console.log('❌ SDK failed, falling back to browser:', error);
+          // Fallback to external URL
+          const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+          window.open(farcasterUrl, '_blank');
           closeShareModal();
         });
       } else {
-        console.log('Using browser Farcaster sharing');
-        // Regular browser - use external URL
+        console.log('🌐 No SDK available, using browser method');
+        // No SDK available - use external URL (works in browser)
         const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
         closeShareModal();
@@ -1445,28 +1431,19 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // Show "Add to Farcaster" button only when in Farcaster context and SDK is available
-      const isInFarcaster = window.location !== window.parent.location || 
-          window.navigator.userAgent.includes('Farcaster') || 
-          (document.referrer && document.referrer.includes('farcaster')) ||
-          window.location.hostname.includes('farcaster') ||
-          document.title.includes('Farcaster') ||
-          window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
-
-      console.log('Button visibility check:', {
-        isInFarcaster,
-        sdkAvailable: !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp)
-      });
-
+      // Show "Add to Home Screen" button only when SDK is available (means we're in Farcaster)
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-      if (addToFarcasterBtn && isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp) {
+      const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
+      
+      console.log('🔍 Button check - SDK available:', sdkAvailable);
+      
+      if (addToFarcasterBtn && sdkAvailable) {
         addToFarcasterBtn.style.display = 'inline-flex';
         addToFarcasterBtn.style.alignItems = 'center';
-        console.log('Showing Add to Farcaster button - in Farcaster context with SDK');
+        console.log('✅ Showing Add to Home Screen button - SDK available');
       } else if (addToFarcasterBtn) {
         addToFarcasterBtn.style.display = 'none';
-        console.log('Hiding Add to Farcaster button - not in Farcaster context or no SDK');
+        console.log('❌ Hiding Add to Home Screen button - no SDK');
       }
 
       // Call ready() after a short delay to ensure app is fully loaded
