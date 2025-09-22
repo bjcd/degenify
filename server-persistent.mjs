@@ -14,8 +14,24 @@ const app = express();
 // Serve Farcaster Mini App manifest (must be before static middleware)
 app.get('/.well-known/farcaster.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  // Serve the actual file content instead of hardcoded JSON
-  res.sendFile(path.join(__dirname, 'public/.well-known/farcaster.json'));
+  try {
+    // Read and serve the actual file content
+    const filePath = path.join(__dirname, 'public', '.well-known', 'farcaster.json');
+    console.log('Serving farcaster.json from:', filePath);
+    
+    // Check if file exists first
+    if (!fs.existsSync(filePath)) {
+      console.error('farcaster.json not found at:', filePath);
+      return res.status(404).json({ error: 'Manifest not found' });
+    }
+    
+    const manifestContent = fs.readFileSync(filePath, 'utf8');
+    const manifest = JSON.parse(manifestContent);
+    res.json(manifest);
+  } catch (error) {
+    console.error('Error serving farcaster.json:', error);
+    res.status(500).json({ error: 'Failed to load manifest' });
+  }
 });
 
 app.use(express.json({ limit: '1mb' }));
