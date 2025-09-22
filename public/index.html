@@ -1337,12 +1337,14 @@ $DEGEN @degentokenbase`;
 
       // CAPABILITY-BASED DETECTION: Check if required capabilities are available
       const requiredCapabilities = ['composeCast', 'addMiniApp'];
-      const hasRequiredCapabilities = requiredCapabilities.every(capability =>
-        hasSDK && window.farcaster.actions[capability]
+      const hasRequiredCapabilities = requiredCapabilities.every(capability => 
+        hasSDK && window.farcaster.actions && typeof window.farcaster.actions[capability] === 'function'
       );
 
-      // MINIAPP ENVIRONMENT: Only true if ALL required capabilities are present
-      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities;
+      // STRICT MINIAPP ENVIRONMENT: Only true if ALL required capabilities are functional
+      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities && 
+        (window.farcaster.actions.composeCast !== undefined) && 
+        (window.farcaster.actions.addMiniApp !== undefined);
 
       const shouldUseSDK = isFarcasterMiniapp;
       const shouldShowButton = isFarcasterMiniapp;
@@ -1359,6 +1361,14 @@ $DEGEN @degentokenbase`;
       console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
       console.log('- window.farcaster:', window.farcaster);
       console.log('- window.farcaster.actions:', window.farcaster?.actions);
+      
+      // Test if capabilities are actually functional
+      if (hasSDK && window.farcaster.actions) {
+        console.log('- composeCast type:', typeof window.farcaster.actions.composeCast);
+        console.log('- addMiniApp type:', typeof window.farcaster.actions.addMiniApp);
+        console.log('- composeCast function?', typeof window.farcaster.actions.composeCast === 'function');
+        console.log('- addMiniApp function?', typeof window.farcaster.actions.addMiniApp === 'function');
+      }
 
       return {
         isMobile,
@@ -1507,13 +1517,27 @@ Create yours on www.degenify.xyz`;
       userAgentFull: window.navigator.userAgent
     });
 
-    // Always try to load SDK - let Farcaster handle the detection
-    console.log('📱 Loading Farcaster SDK - always try');
+    // Try to load SDK - but validate it has proper capabilities
+    console.log('📱 Loading Farcaster SDK - conditional load');
     import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
       console.log('Farcaster SDK loaded successfully', sdk);
 
       // Make SDK globally available
       window.farcaster = sdk;
+      
+      // Validate SDK has required capabilities
+      const hasValidCapabilities = sdk.actions && 
+        typeof sdk.actions.composeCast === 'function' && 
+        typeof sdk.actions.addMiniApp === 'function';
+      
+      console.log('SDK capabilities validation:', hasValidCapabilities);
+      
+      if (!hasValidCapabilities) {
+        console.log('⚠️ SDK loaded but lacks required capabilities - treating as regular browser');
+        // Don't expose SDK if capabilities are missing
+        window.farcaster = null;
+        return;
+      }
 
       // Debug: Log available actions
       console.log('Available SDK actions:', Object.keys(sdk.actions || {}));
