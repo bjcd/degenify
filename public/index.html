@@ -1378,14 +1378,14 @@ ${shareUrl}`;
     setupInfiniteScroll();
 
     // Farcaster Mini App - white background and immediate ready() call
-    const isInFarcaster = window.location !== window.parent.location || 
-        window.navigator.userAgent.includes('Farcaster') || 
-        document.referrer.includes('farcaster');
-    
+    const isInFarcaster = window.location !== window.parent.location ||
+      window.navigator.userAgent.includes('Farcaster') ||
+      document.referrer.includes('farcaster');
+
     if (isInFarcaster) {
       document.body.style.backgroundColor = '#ffffff';
       document.documentElement.style.backgroundColor = '#ffffff';
-      
+
       // Try to call ready() immediately if SDK is already available
       if (window.farcaster && window.farcaster.actions) {
         window.farcaster.actions.ready();
@@ -1398,47 +1398,69 @@ ${shareUrl}`;
   <!-- Farcaster Mini App SDK -->
   <script type="module">
     // More robust Farcaster detection
-    const isInFarcaster = window.location !== window.parent.location ||
-      window.navigator.userAgent.includes('Farcaster') ||
-      document.referrer.includes('farcaster') ||
-      window.location.hostname.includes('farcaster') ||
-      document.title.includes('Farcaster');
-
+    const isInFarcaster = window.location !== window.parent.location || 
+        window.navigator.userAgent.includes('Farcaster') || 
+        document.referrer.includes('farcaster') ||
+        window.location.hostname.includes('farcaster') ||
+        document.title.includes('Farcaster') ||
+        window.location.search.includes('farcaster') ||
+        window.location.hash.includes('farcaster');
+    
     console.log('Farcaster detection:', {
       isInFarcaster,
       isIframe: window.location !== window.parent.location,
       userAgent: window.navigator.userAgent.includes('Farcaster'),
       referrer: document.referrer.includes('farcaster'),
       hostname: window.location.hostname.includes('farcaster'),
-      title: document.title.includes('Farcaster')
+      title: document.title.includes('Farcaster'),
+      search: window.location.search.includes('farcaster'),
+      hash: window.location.hash.includes('farcaster'),
+      fullUrl: window.location.href,
+      userAgentFull: window.navigator.userAgent
     });
 
-    // Only try to load SDK if we're in Farcaster context
-    if (isInFarcaster) {
-      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-        console.log('Farcaster SDK loaded successfully');
-        
-        // Show "Add to Farcaster" button only when SDK is actually available
-        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-        if (addToFarcasterBtn) {
-          addToFarcasterBtn.style.display = 'inline-flex';
-          addToFarcasterBtn.style.alignItems = 'center';
-        }
-        
-        // Call ready() after a short delay to ensure app is fully loaded
-        setTimeout(() => {
+    // Always try to load SDK - let Farcaster handle the detection
+    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+      console.log('Farcaster SDK loaded successfully');
+      
+      // Show "Add to Farcaster" button only when SDK is actually available
+      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+      if (addToFarcasterBtn) {
+        addToFarcasterBtn.style.display = 'inline-flex';
+        addToFarcasterBtn.style.alignItems = 'center';
+      }
+      
+      // Call ready() after a short delay to ensure app is fully loaded
+      setTimeout(() => {
+        sdk.actions.ready();
+        console.log('Called sdk.actions.ready()');
+      }, 100);
+      
+      // Also try calling ready() immediately
+      try {
+        sdk.actions.ready();
+        console.log('Called sdk.actions.ready() immediately');
+      } catch (e) {
+        console.log('Immediate ready() call failed:', e);
+      }
+      
+      // Try again after 500ms
+      setTimeout(() => {
+        try {
           sdk.actions.ready();
-          console.log('Called sdk.actions.ready()');
-        }, 100);
-      }).catch(error => {
-        console.error('Failed to load Farcaster SDK:', error);
-        // If SDK fails to load, still try to call ready on window.farcaster if it exists
-        if (window.farcaster && window.farcaster.actions) {
-          window.farcaster.actions.ready();
-          console.log('Called ready() via window.farcaster fallback');
+          console.log('Called sdk.actions.ready() after 500ms');
+        } catch (e) {
+          console.log('500ms ready() call failed:', e);
         }
-      });
-    }
+      }, 500);
+    }).catch(error => {
+      console.error('Failed to load Farcaster SDK:', error);
+      // If SDK fails to load, still try to call ready on window.farcaster if it exists
+      if (window.farcaster && window.farcaster.actions) {
+        window.farcaster.actions.ready();
+        console.log('Called ready() via window.farcaster fallback');
+      }
+    });
   </script>
 </body>
 
