@@ -876,7 +876,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1337,13 +1337,13 @@ $DEGEN @degentokenbase`;
 
       // CAPABILITY-BASED DETECTION: Check if required capabilities are available
       const requiredCapabilities = ['composeCast', 'addMiniApp'];
-      const hasRequiredCapabilities = requiredCapabilities.every(capability => 
+      const hasRequiredCapabilities = requiredCapabilities.every(capability =>
         hasSDK && window.farcaster.actions && typeof window.farcaster.actions[capability] === 'function'
       );
 
       // STRICT MINIAPP ENVIRONMENT: Only true if ALL required capabilities are functional
-      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities && 
-        (window.farcaster.actions.composeCast !== undefined) && 
+      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities &&
+        (window.farcaster.actions.composeCast !== undefined) &&
         (window.farcaster.actions.addMiniApp !== undefined);
 
       const shouldUseSDK = isFarcasterMiniapp;
@@ -1361,7 +1361,7 @@ $DEGEN @degentokenbase`;
       console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
       console.log('- window.farcaster:', window.farcaster);
       console.log('- window.farcaster.actions:', window.farcaster?.actions);
-      
+
       // Test if capabilities are actually functional
       if (hasSDK && window.farcaster.actions) {
         console.log('- composeCast type:', typeof window.farcaster.actions.composeCast);
@@ -1517,51 +1517,67 @@ Create yours on www.degenify.xyz`;
       userAgentFull: window.navigator.userAgent
     });
 
-    // Try to load SDK - but validate it has proper capabilities
-    console.log('📱 Loading Farcaster SDK - conditional load');
-    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-      console.log('Farcaster SDK loaded successfully', sdk);
+    // Only load SDK in actual Farcaster contexts
+    const isLikelyFarcaster = window.location !== window.parent.location || 
+                             window.navigator.userAgent.includes('Farcaster') ||
+                             (document.referrer && document.referrer.includes('farcaster'));
+    
+    console.log('🔍 Farcaster context check:', {
+      isIframe: window.location !== window.parent.location,
+      hasUserAgent: window.navigator.userAgent.includes('Farcaster'),
+      hasReferrer: document.referrer && document.referrer.includes('farcaster'),
+      isLikelyFarcaster
+    });
+    
+    if (!isLikelyFarcaster) {
+      console.log('🌐 Regular browser detected - skipping SDK load');
+      // Ensure no SDK is available
+      window.farcaster = null;
+    } else {
+      console.log('📱 Farcaster context detected - loading SDK');
+      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+        console.log('Farcaster SDK loaded successfully', sdk);
 
-      // Make SDK globally available
-      window.farcaster = sdk;
-      
-      // Validate SDK has required capabilities
-      const hasValidCapabilities = sdk.actions && 
-        typeof sdk.actions.composeCast === 'function' && 
-        typeof sdk.actions.addMiniApp === 'function';
-      
-      console.log('SDK capabilities validation:', hasValidCapabilities);
-      
-      if (!hasValidCapabilities) {
-        console.log('⚠️ SDK loaded but lacks required capabilities - treating as regular browser');
-        // Don't expose SDK if capabilities are missing
-        window.farcaster = null;
-        return;
-      }
-
-      // Debug: Log available actions
-      console.log('Available SDK actions:', Object.keys(sdk.actions || {}));
-      console.log('SDK actions object:', sdk.actions);
-      console.log('composeCast available:', !!sdk.actions.composeCast);
-      console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
-
-      // FIXED: Show button whenever SDK is available (mobile or desktop miniapp)
-      const updateButtonVisibility = () => {
-        const buttonContext = window.detectFarcasterContext();
-        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-
-        console.log('🔍 Button context check:', buttonContext);
-
-        // FIXED: Show button when SDK is available (miniapp context)
-        if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-          addToFarcasterBtn.style.display = 'inline-flex';
-          addToFarcasterBtn.style.alignItems = 'center';
-          console.log('✅ SHOWING Add miniapp button - SDK available');
-        } else if (addToFarcasterBtn) {
-          addToFarcasterBtn.style.display = 'none';
-          console.log('❌ HIDING button - SDK not ready yet');
+        // Make SDK globally available
+        window.farcaster = sdk;
+        
+        // Validate SDK has required capabilities
+        const hasValidCapabilities = sdk.actions && 
+          typeof sdk.actions.composeCast === 'function' && 
+          typeof sdk.actions.addMiniApp === 'function';
+        
+        console.log('SDK capabilities validation:', hasValidCapabilities);
+        
+        if (!hasValidCapabilities) {
+          console.log('⚠️ SDK loaded but lacks required capabilities - treating as regular browser');
+          // Don't expose SDK if capabilities are missing
+          window.farcaster = null;
+          return;
         }
-      };
+
+        // Debug: Log available actions
+        console.log('Available SDK actions:', Object.keys(sdk.actions || {}));
+        console.log('SDK actions object:', sdk.actions);
+        console.log('composeCast available:', !!sdk.actions.composeCast);
+        console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
+
+        // FIXED: Show button whenever SDK is available (mobile or desktop miniapp)
+        const updateButtonVisibility = () => {
+          const buttonContext = window.detectFarcasterContext();
+          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+          
+          console.log('🔍 Button context check:', buttonContext);
+          
+          // FIXED: Show button when SDK is available (miniapp context)
+          if (addToFarcasterBtn && buttonContext.shouldShowButton) {
+            addToFarcasterBtn.style.display = 'inline-flex';
+            addToFarcasterBtn.style.alignItems = 'center';
+            console.log('✅ SHOWING Add miniapp button - SDK available');
+          } else if (addToFarcasterBtn) {
+            addToFarcasterBtn.style.display = 'none';
+            console.log('❌ HIDING button - SDK not ready yet');
+          }
+        };
 
       // Initial check
       updateButtonVisibility();
@@ -1632,14 +1648,25 @@ Create yours on www.degenify.xyz`;
           setTimeout(waitForSDKAndCallReady, 100);
         });
       }
-    }).catch(error => {
-      console.error('Failed to load Farcaster SDK:', error);
-      // If SDK fails to load, still try to call ready on window.farcaster if it exists
-      if (window.farcaster && window.farcaster.actions) {
-        window.farcaster.actions.ready();
-        console.log('Called ready() via window.farcaster fallback');
+      }).catch(error => {
+        console.error('Failed to load Farcaster SDK:', error);
+        // If SDK fails to load, still try to call ready on window.farcaster if it exists
+        if (window.farcaster && window.farcaster.actions) {
+          window.farcaster.actions.ready();
+          console.log('Called ready() via window.farcaster fallback');
+        }
+      });
+    }
+
+    // Fallback for regular browsers - ensure button is hidden
+    if (!isLikelyFarcaster) {
+      console.log('🌐 Regular browser - ensuring button is hidden');
+      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+      if (addToFarcasterBtn) {
+        addToFarcasterBtn.style.display = 'none';
+        console.log('✅ HIDING button - regular browser detected');
       }
-    });
+    }
 
     // Also try calling ready() immediately if SDK is already available (like in working version)
     if (window.farcaster && window.farcaster.actions) {
