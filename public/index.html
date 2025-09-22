@@ -1184,7 +1184,7 @@
 
     // Share to X (Twitter) - make globally accessible
     window.shareToX = function (imageId) {
-      const imageUrl = `${window.location.origin}/api/download/${imageId}`;
+      const imageUrl = `${window.location.origin}/api/image/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN @degentokenbase`;
       const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(imageUrl)}`;
       window.open(twitterUrl, '_blank');
@@ -1194,7 +1194,7 @@
 
     // Share to Farcaster - make globally accessible
     window.shareToFarcaster = function (imageId) {
-      const imageUrl = `${window.location.origin}/api/download/${imageId}`;
+      const imageUrl = `${window.location.origin}/api/image/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN /degen`;
       const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text + ' ' + imageUrl)}`;
       window.open(farcasterUrl, '_blank');

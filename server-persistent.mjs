@@ -171,6 +171,26 @@ app.get('/api/gallery', async (req, res) => {
     }
 });
 
+// API endpoint to serve image directly (for social media previews)
+app.get('/api/image/:id', async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const result = await pool.query('SELECT * FROM images WHERE id = $1', [imageId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Image not found' });
+        }
+
+        const image = result.rows[0];
+
+        // Redirect to Cloudinary URL for direct image serving
+        res.redirect(image.cloudinary_url);
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+});
+
 // API endpoint to download a specific image
 app.get('/api/download/:id', async (req, res) => {
     try {
