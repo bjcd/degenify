@@ -867,7 +867,7 @@
               style="margin-right: 8px; vertical-align: middle;">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
-            Add miniapp to Farcaster
+            Add to Home Screen
           </button>
         </div>
       </div>
@@ -1310,16 +1310,16 @@ $DEGEN
 ${shareUrl}`;
       
       // Check if we're in Farcaster Mini App context and SDK is available
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.createCast) {
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.compose_cast) {
         // Use Farcaster SDK for sharing within Mini App
-        window.farcaster.actions.createCast({
+        window.farcaster.actions.compose_cast({
           text: text,
           embeds: [shareUrl]
         }).then(() => {
-          console.log('Cast created successfully');
+          console.log('Cast composer opened successfully');
           closeShareModal();
         }).catch(error => {
-          console.error('Failed to create cast:', error);
+          console.error('Failed to open cast composer:', error);
           // Fallback to external URL
           const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
           window.open(farcasterUrl, '_blank');
@@ -1335,15 +1335,15 @@ ${shareUrl}`;
 
     // Add to Farcaster function
     window.addToFarcaster = function () {
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.addToHomeScreen) {
-        window.farcaster.actions.addToHomeScreen().then(() => {
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp) {
+        window.farcaster.actions.addMiniApp().then(() => {
           console.log('Added miniapp to home screen successfully');
         }).catch(error => {
           console.error('Failed to add miniapp to home screen:', error);
         });
       } else {
         // This should not happen since button is only shown when SDK is available
-        console.error('Farcaster SDK or addToHomeScreen not available');
+        console.error('Farcaster SDK or addMiniApp not available');
       }
     };
 
@@ -1419,9 +1419,13 @@ ${shareUrl}`;
     // Always try to load SDK - let Farcaster handle the detection
     import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
       console.log('Farcaster SDK loaded successfully', sdk);
-      
+
       // Make SDK globally available
       window.farcaster = sdk;
+      
+      // Debug: Log available actions
+      console.log('Available SDK actions:', Object.keys(sdk.actions || {}));
+      console.log('SDK actions object:', sdk.actions);
       
       // Show "Add to Farcaster" button only when SDK is actually available
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
@@ -1429,13 +1433,13 @@ ${shareUrl}`;
         addToFarcasterBtn.style.display = 'inline-flex';
         addToFarcasterBtn.style.alignItems = 'center';
       }
-      
+
       // Call ready() after a short delay to ensure app is fully loaded
       setTimeout(() => {
         sdk.actions.ready();
         console.log('Called sdk.actions.ready()');
       }, 100);
-      
+
       // Also try calling ready() immediately
       try {
         sdk.actions.ready();
@@ -1443,7 +1447,7 @@ ${shareUrl}`;
       } catch (e) {
         console.log('Immediate ready() call failed:', e);
       }
-      
+
       // Try again after 500ms
       setTimeout(() => {
         try {
