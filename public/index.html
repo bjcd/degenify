@@ -1309,14 +1309,15 @@ $DEGEN
 
 ${shareUrl}`;
 
-      // Check if we're in Farcaster Mini App context
+      // Check if we're in Farcaster Mini App context - more robust detection
       const isInFarcaster = window.location !== window.parent.location || 
           window.navigator.userAgent.includes('Farcaster') || 
-          document.referrer.includes('farcaster') ||
+          (document.referrer && document.referrer.includes('farcaster')) ||
           window.location.hostname.includes('farcaster') ||
           document.title.includes('Farcaster') ||
           window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
+          window.location.hash.includes('farcaster') ||
+          window.farcaster; // If SDK is loaded, we're likely in Farcaster
 
       console.log('Farcaster detection:', {
         isInFarcaster,
@@ -1331,8 +1332,8 @@ ${shareUrl}`;
       });
 
       // Check if we're in Farcaster Mini App context and SDK is available
-      if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
-        console.log('Using Farcaster SDK for sharing');
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('Using Farcaster SDK for sharing - SDK available');
         // Use Farcaster SDK for sharing within Mini App
         window.farcaster.actions.composeCast({
           text: text,
@@ -1348,7 +1349,7 @@ ${shareUrl}`;
           closeShareModal();
         });
       } else {
-        console.log('Using regular browser sharing');
+        console.log('Using regular browser sharing - no SDK available');
         // Regular browser - use external URL
         const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
@@ -1455,11 +1456,12 @@ ${shareUrl}`;
       // Show "Add to Farcaster" button only when in Farcaster context and SDK is available
       const isInFarcaster = window.location !== window.parent.location || 
           window.navigator.userAgent.includes('Farcaster') || 
-          document.referrer.includes('farcaster') ||
+          (document.referrer && document.referrer.includes('farcaster')) ||
           window.location.hostname.includes('farcaster') ||
           document.title.includes('Farcaster') ||
           window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster');
+          window.location.hash.includes('farcaster') ||
+          window.farcaster; // If SDK is loaded, we're likely in Farcaster
 
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
       if (addToFarcasterBtn && isInFarcaster) {
