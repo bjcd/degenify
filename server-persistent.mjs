@@ -345,7 +345,7 @@ app.get('/api/share/:id', async (req, res) => {
             font-size: 1.25rem;
             height: 4rem;
             width: 100%;
-            max-width: 300px;
+            max-width: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -411,6 +411,8 @@ app.get('/api/share/:id', async (req, res) => {
         .prompt-overlay {
             position: relative;
             margin: 2rem 0;
+            display: inline-block;
+            max-width: 100%;
         }
 
         .prompt-overlay img {
@@ -418,16 +420,79 @@ app.get('/api/share/:id', async (req, res) => {
             height: auto;
             border-radius: 1rem;
             box-shadow: var(--shadow-intense);
+            max-width: 600px;
         }
 
-        .prompt-overlay-content {
+        .image-overlay {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            inset: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.2), transparent);
-            padding: 2rem;
-            border-radius: 0 0 1rem 1rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border-radius: 1rem;
+        }
+
+        .prompt-overlay:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .overlay-content {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            right: 1rem;
+        }
+
+        .overlay-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .overlay-action-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .overlay-action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .overlay-action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .overlay-download-btn {
+            background: hsl(var(--primary) / 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid hsl(var(--primary));
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .overlay-download-btn:hover {
+            background: hsl(var(--primary));
         }
 
         .prompt-text {
@@ -510,8 +575,26 @@ app.get('/api/share/:id', async (req, res) => {
                 <!-- Image with Prompt Overlay -->
                 <div class="prompt-overlay">
                     <img src="${imageUrl}" alt="Epic Degeneration">
-                    <div class="prompt-overlay-content">
-                        <p class="prompt-text">${image.prompt}</p>
+                    <div class="image-overlay">
+                        <div class="overlay-content">
+                            <div class="overlay-actions">
+                                <div class="overlay-action-group">
+                                    <button class="overlay-action-btn" onclick="shareImage('${imageId}')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 1 1 0-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 1 1 5.367-2.684 3 3 0 0 1-5.367 2.684zm0 9.316a3 3 0 1 1 5.367 2.684 3 3 0 0 1-5.367-2.684z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button class="overlay-download-btn" onclick="downloadImage('${imageId}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7,10 12,15 17,10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="prompt-text">${image.prompt}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -526,6 +609,41 @@ app.get('/api/share/:id', async (req, res) => {
             </div>
         </footer>
     </div>
+
+    <script>
+        // Share image function
+        function shareImage(imageId) {
+            const shareUrl = window.location.origin + '/api/share/' + imageId;
+            const text = 'Check out this epic degeneration I created with Degenify! 🎩 🔥 \\nCreate yours on ' + window.location.origin + '\\n\\n$DEGEN @degentokenbase';
+            const twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(shareUrl);
+            window.open(twitterUrl, '_blank');
+        }
+
+        // Download image function
+        function downloadImage(imageId) {
+            fetch('/api/download/' + imageId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Download failed');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'meme-' + imageId + '.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert('Download failed: ' + error.message);
+                });
+        }
+    </script>
 </body>
 </html>`;
 
