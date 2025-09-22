@@ -14,7 +14,19 @@ const app = express();
 // Serve Farcaster Mini App manifest (must be before static middleware)
 app.get('/.well-known/farcaster.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.sendFile(path.join(__dirname, 'public', '.well-known', 'farcaster.json'));
+  res.json({
+    "name": "Degenify",
+    "description": "Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.",
+    "icon": "https://www.degenify.xyz/miniapp-icon.png",
+    "url": "https://www.degenify.xyz",
+    "version": "1.0.0",
+    "author": "standpoint.eth",
+    "category": "entertainment",
+    "tags": ["ai", "image-generation", "meme", "fun", "degen"],
+    "screenshots": ["https://www.degenify.xyz/miniapp-icon.png"],
+    "permissions": [],
+    "features": ["image-generation", "sharing", "gallery"]
+  });
 });
 
 app.use(express.json({ limit: '1mb' }));
