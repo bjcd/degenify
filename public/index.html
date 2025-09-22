@@ -1265,23 +1265,20 @@ ${shareUrl}`;
     loadGallery();
 
     // Farcaster Mini App Integration
-    // Only load SDK if running in Farcaster context
-    if (window.location !== window.parent.location) {
-      // We're in an iframe (likely Farcaster)
-      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-        // Hide splash screen and show app
-        sdk.actions.ready();
-        
-        // Add white background for Mini App context
-        document.body.style.backgroundColor = '#ffffff';
-        document.documentElement.style.backgroundColor = '#ffffff';
-        
-        // Optional: Add Farcaster-specific features
-        console.log('Degenify loaded as Farcaster Mini App');
-      }).catch(err => {
-        console.log('Not in Farcaster context or SDK failed to load:', err);
-      });
-    }
+    // Try to load SDK and detect Farcaster context
+    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+      // Hide splash screen and show app
+      sdk.actions.ready();
+      
+      // Add white background for Mini App context
+      document.body.style.backgroundColor = '#ffffff';
+      document.documentElement.style.backgroundColor = '#ffffff';
+      
+      console.log('Degenify loaded as Farcaster Mini App');
+    }).catch(err => {
+      // Not in Farcaster context, keep original design
+      console.log('Not in Farcaster context, using original design');
+    });
   </script>
 </body>
 
