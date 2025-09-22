@@ -420,7 +420,6 @@ app.get('/api/share/:id', async (req, res) => {
             height: auto;
             border-radius: 1rem;
             box-shadow: var(--shadow-intense);
-            max-width: 600px;
         }
 
         .image-overlay {
@@ -502,6 +501,107 @@ app.get('/api/share/:id', async (req, res) => {
             line-height: 1.4;
             margin: 0;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Share Modal Styles */
+        .share-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .share-modal {
+            background: white;
+            border-radius: 1rem;
+            padding: 0;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .share-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .share-modal-header h3 {
+            margin: 0;
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .share-modal-close {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            transition: var(--transition-smooth);
+        }
+
+        .share-modal-close:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1f2937;
+        }
+
+        .share-modal-content {
+            padding: 1.5rem;
+        }
+
+        .share-modal-content p {
+            margin: 0 0 1rem 0;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .share-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .share-option-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            color: #1f2937;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-align: left;
+        }
+
+        .share-option-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .share-option-btn svg {
+            flex-shrink: 0;
         }
 
         .animate-fade-in {
@@ -611,12 +711,78 @@ app.get('/api/share/:id', async (req, res) => {
     </div>
 
     <script>
-        // Share image function
+        // Share image function - shows modal like homepage
         function shareImage(imageId) {
+            showShareModal(imageId);
+        }
+
+        // Show share modal with X and Farcaster options
+        function showShareModal(imageId) {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.className = 'share-modal-overlay';
+            modal.innerHTML = `
+                <div class="share-modal">
+                    <div class="share-modal-header">
+                        <h3>Share this creation</h3>
+                        <button class="share-modal-close" onclick="closeShareModal()">&times;</button>
+                    </div>
+                    <div class="share-modal-content">
+                        <p>Choose where to share:</p>
+                        <div class="share-options">
+                            <button class="share-option-btn" onclick="shareToX('${imageId}')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                Share on X
+                            </button>
+                            <button class="share-option-btn" onclick="shareToFarcaster('${imageId}')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                Share on Farcaster
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Lock body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+
+            // Close modal when clicking overlay
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeShareModal();
+                }
+            });
+        }
+
+        // Close share modal
+        function closeShareModal() {
+            const shareModals = document.querySelectorAll('.share-modal-overlay');
+            shareModals.forEach(modal => modal.remove());
+            document.body.style.overflow = '';
+        }
+
+        // Share to X (Twitter)
+        function shareToX(imageId) {
             const shareUrl = window.location.origin + '/api/share/' + imageId;
             const text = 'Check out this epic degeneration I created with Degenify! 🎩 🔥 \\nCreate yours on ' + window.location.origin + '\\n\\n$DEGEN @degentokenbase';
             const twitterUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(shareUrl);
             window.open(twitterUrl, '_blank');
+            closeShareModal();
+        }
+
+        // Share to Farcaster
+        function shareToFarcaster(imageId) {
+            const shareUrl = window.location.origin + '/api/share/' + imageId;
+            const text = 'Check out this epic degeneration I created with Degenify! 🎩 🔥 \\nCreate yours on ' + window.location.origin + '\\n\\n$DEGEN \\n/degen';
+            const farcasterUrl = 'https://farcaster.xyz/~/compose?text=' + encodeURIComponent(text + ' ' + shareUrl);
+            window.open(farcasterUrl, '_blank');
+            closeShareModal();
         }
 
         // Download image function
