@@ -1332,10 +1332,13 @@ ${shareUrl}`;
         isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
       });
 
-      // Try SDK first if available, regardless of detection (mobile miniapp might not detect properly)
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
-        console.log('🎯 Trying Farcaster SDK first - available');
-        // Try native SDK first
+      // Smart approach: Only try SDK if we have strong indicators we're in Farcaster
+      const strongFarcasterIndicators = isInFarcaster || 
+          (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent) && window.farcaster);
+
+      if (strongFarcasterIndicators && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('🎯 Using Farcaster SDK - strong indicators present');
+        // Try native SDK
         window.farcaster.actions.composeCast({
           text: text,
           embeds: [shareUrl]
