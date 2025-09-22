@@ -11,14 +11,14 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Serve Farcaster Mini App manifest
+// Serve Farcaster Mini App manifest (must be before static middleware)
 app.get('/.well-known/farcaster.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.sendFile(path.join(__dirname, 'public', '.well-known', 'farcaster.json'));
 });
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
