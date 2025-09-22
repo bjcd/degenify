@@ -1205,11 +1205,11 @@
       const context = window.detectFarcasterContext();
       console.log('🔽 Download attempt in context:', context);
 
-      // FARCASTER MINIAPP ONLY: Use direct navigation instead of programmatic download
+      // MINIAPP: Use navigation-based download, WEBSITE: Use programmatic download
       if (context.isFarcasterMiniapp) {
-        console.log('🔽 MINIAPP: Opening download URL directly');
+        console.log('🔽 MINIAPP: Opening download URL directly (navigation-based)');
         const downloadUrl = `${window.location.origin}/api/download/${imageId}`;
-
+        
         // Try to open in new tab/window - miniapp should handle this
         try {
           window.open(downloadUrl, '_blank');
@@ -1221,9 +1221,9 @@
         }
         return;
       }
-
-      // REGULAR BROWSER: Use programmatic download
-      console.log('🔽 BROWSER: Using programmatic download');
+      
+      // WEBSITE: Use traditional programmatic download (direct to Downloads folder)
+      console.log('🔽 WEBSITE: Using programmatic download (blob + link.click)');
       fetch(`/api/download/${imageId}`)
         .then(response => {
           if (!response.ok) {
@@ -1337,13 +1337,13 @@ $DEGEN @degentokenbase`;
 
       // CAPABILITY-BASED DETECTION: Check if required capabilities are available
       const requiredCapabilities = ['composeCast', 'addMiniApp'];
-      const hasRequiredCapabilities = requiredCapabilities.every(capability => 
+      const hasRequiredCapabilities = requiredCapabilities.every(capability =>
         hasSDK && window.farcaster.actions[capability]
       );
 
       // MINIAPP ENVIRONMENT: Only true if ALL required capabilities are present
       const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities;
-      
+
       const shouldUseSDK = isFarcasterMiniapp;
       const shouldShowButton = isFarcasterMiniapp;
 
@@ -1384,8 +1384,8 @@ Create yours on www.degenify.xyz`;
       const context = window.detectFarcasterContext();
       console.log('🔍 FIXED CONTEXT:', context);
 
-      // FIXED: Use SDK whenever available (mobile or desktop miniapp)
-      if (context.shouldUseSDK) {
+      // MINIAPP: Use native SDK sharing, WEBSITE: Use browser fallback
+      if (context.isFarcasterMiniapp) {
         console.log('🎯 Using Farcaster SDK for sharing');
         try {
           const result = window.farcaster.actions.composeCast({
@@ -1414,7 +1414,7 @@ Create yours on www.degenify.xyz`;
           closeShareModal();
         }
       } else {
-        console.log('🌐 Using browser method');
+        console.log('🌐 WEBSITE: Using browser method (Warpcast URL)');
         const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
         closeShareModal();
