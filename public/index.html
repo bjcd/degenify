@@ -1308,16 +1308,13 @@ $DEGEN
 /degen 
 
 ${shareUrl}`;
-
-      // Check if we're in Farcaster Mini App context
-      if (window.farcaster && window.farcaster.actions) {
+      
+      // Check if we're in Farcaster Mini App context and SDK is available
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.createCast) {
         // Use Farcaster SDK for sharing within Mini App
         window.farcaster.actions.createCast({
-          cast: {
-            parent: '0x',
-            text: text,
-            embeds: [shareUrl]
-          }
+          text: text,
+          embeds: [shareUrl]
         }).then(() => {
           console.log('Cast created successfully');
           closeShareModal();
@@ -1338,7 +1335,7 @@ ${shareUrl}`;
 
     // Add to Farcaster function
     window.addToFarcaster = function () {
-      if (window.farcaster && window.farcaster.actions) {
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.addToHomeScreen) {
         window.farcaster.actions.addToHomeScreen().then(() => {
           console.log('Added miniapp to home screen successfully');
         }).catch(error => {
@@ -1346,7 +1343,7 @@ ${shareUrl}`;
         });
       } else {
         // This should not happen since button is only shown when SDK is available
-        console.error('Farcaster SDK not available');
+        console.error('Farcaster SDK or addToHomeScreen not available');
       }
     };
 
@@ -1398,14 +1395,14 @@ ${shareUrl}`;
   <!-- Farcaster Mini App SDK -->
   <script type="module">
     // More robust Farcaster detection
-    const isInFarcaster = window.location !== window.parent.location || 
-        window.navigator.userAgent.includes('Farcaster') || 
-        document.referrer.includes('farcaster') ||
-        window.location.hostname.includes('farcaster') ||
-        document.title.includes('Farcaster') ||
-        window.location.search.includes('farcaster') ||
-        window.location.hash.includes('farcaster');
-    
+    const isInFarcaster = window.location !== window.parent.location ||
+      window.navigator.userAgent.includes('Farcaster') ||
+      document.referrer.includes('farcaster') ||
+      window.location.hostname.includes('farcaster') ||
+      document.title.includes('Farcaster') ||
+      window.location.search.includes('farcaster') ||
+      window.location.hash.includes('farcaster');
+
     console.log('Farcaster detection:', {
       isInFarcaster,
       isIframe: window.location !== window.parent.location,
@@ -1421,7 +1418,10 @@ ${shareUrl}`;
 
     // Always try to load SDK - let Farcaster handle the detection
     import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-      console.log('Farcaster SDK loaded successfully');
+      console.log('Farcaster SDK loaded successfully', sdk);
+      
+      // Make SDK globally available
+      window.farcaster = sdk;
       
       // Show "Add to Farcaster" button only when SDK is actually available
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
