@@ -21,5 +21,10 @@
         "image-generation",
         "sharing",
         "gallery"
-    ]
+    ],
+    "accountAssociation": {
+        "header": "eyJmaWQiOjE3MDY0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MjUxMzk5NkZENzNBNmZCNDQ2YTZBNmRhNDE1NEVjNTAzZURhYjhEMiJ9",
+        "payload": "eyJkb21haW4iOiJ3d3cuZGVnZW5pZnkueHl6In0",
+        "signature": "MHgwNDY3ODllMjYwNWYyODU2OWMxY2Y5NjEwOTc3NzRhMjEwMTk0MjQzMmQwN2MxMzliOGZlZTZkYzIzODFlZWIwMDUzMTNiOTM0ZGQ0NWY1OGViNjVkYTNkYzkzOTI2YWEyNGRmMWYyODkwZmRhZDZhMGFkNjY5ZmU5NTkwNjQ2ZDFj"
+    }
 }
