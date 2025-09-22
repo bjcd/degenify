@@ -1321,7 +1321,7 @@ $DEGEN @degentokenbase`;
       const hasUserAgent = window.navigator.userAgent.includes('Farcaster');
       const hasReferrer = document.referrer && document.referrer.includes('farcaster');
       const hasSDKLoaded = !!window.farcaster; // If SDK loads, we're likely in Farcaster
-      
+
       const isInFarcaster = isIframe || hasUserAgent || hasReferrer || hasSDKLoaded;
       const shouldShowButton = hasSDK && hasAddMiniApp && isInFarcaster;
 
@@ -1358,7 +1358,7 @@ $DEGEN @degentokenbase`;
 ${shareUrl}
 
 $DEGEN /degen 
-Create yours on degenify.xyz`;
+Create yours on www.degenify.xyz`;
 
       const context = window.detectFarcasterContext();
       console.log('🔍 FIXED CONTEXT:', context);
