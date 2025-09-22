@@ -1206,7 +1206,7 @@
       console.log('🔽 Download attempt in context:', context);
 
       // FARCASTER MINIAPP ONLY: Use direct navigation instead of programmatic download
-      if (context.hasSDK && context.isInFarcaster) {
+      if (context.isFarcasterMiniapp) {
         console.log('🔽 MINIAPP: Opening download URL directly');
         const downloadUrl = `${window.location.origin}/api/download/${imageId}`;
 
@@ -1335,29 +1335,25 @@ $DEGEN @degentokenbase`;
       const hasComposeCast = !!(hasSDK && window.farcaster.actions.composeCast);
       const hasAddMiniApp = !!(hasSDK && window.farcaster.actions.addMiniApp);
 
-      // FIXED: Show button and use SDK whenever SDK is available (mobile or desktop miniapp)
-      const shouldUseSDK = hasSDK && hasComposeCast;
+      // CAPABILITY-BASED DETECTION: Check if required capabilities are available
+      const requiredCapabilities = ['composeCast', 'addMiniApp'];
+      const hasRequiredCapabilities = requiredCapabilities.every(capability => 
+        hasSDK && window.farcaster.actions[capability]
+      );
 
-      // IMPORTANT: Only show button in actual Farcaster context (not regular website)
-      // More robust detection for mobile miniapp
-      const isIframe = window.location !== window.parent.location;
-      const hasUserAgent = window.navigator.userAgent.includes('Farcaster');
-      const hasReferrer = document.referrer && document.referrer.includes('farcaster');
-      const hasSDKLoaded = !!window.farcaster; // If SDK loads, we're likely in Farcaster
+      // MINIAPP ENVIRONMENT: Only true if ALL required capabilities are present
+      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities;
+      
+      const shouldUseSDK = isFarcasterMiniapp;
+      const shouldShowButton = isFarcasterMiniapp;
 
-      const isInFarcaster = isIframe || hasUserAgent || hasReferrer || hasSDKLoaded;
-      const shouldShowButton = hasSDK && hasAddMiniApp && isInFarcaster;
-
-      console.log('🔍 FIXED DETECTION:');
+      console.log('🔍 CAPABILITY-BASED DETECTION:');
       console.log('- isMobile:', isMobile);
       console.log('- hasSDK:', hasSDK);
       console.log('- hasComposeCast:', hasComposeCast);
       console.log('- hasAddMiniApp:', hasAddMiniApp);
-      console.log('- isIframe:', isIframe);
-      console.log('- hasUserAgent:', hasUserAgent);
-      console.log('- hasReferrer:', hasReferrer);
-      console.log('- hasSDKLoaded:', hasSDKLoaded);
-      console.log('- isInFarcaster:', isInFarcaster);
+      console.log('- hasRequiredCapabilities:', hasRequiredCapabilities);
+      console.log('- isFarcasterMiniapp:', isFarcasterMiniapp);
       console.log('- shouldUseSDK:', shouldUseSDK);
       console.log('- shouldShowButton:', shouldShowButton);
       console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
@@ -1367,6 +1363,8 @@ $DEGEN @degentokenbase`;
         hasSDK,
         hasComposeCast,
         hasAddMiniApp,
+        hasRequiredCapabilities,
+        isFarcasterMiniapp,
         shouldUseSDK,
         shouldShowButton,
         userAgent: window.navigator.userAgent.substring(0, 100)
