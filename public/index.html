@@ -1246,9 +1246,9 @@ ${shareUrl}`;
       const allModals = document.querySelectorAll('[class*="modal"], [class*="overlay"]');
       allModals.forEach(el => el.remove());
 
-      // Reset everything
-      document.body.style.cssText = '';
-      document.documentElement.style.cssText = '';
+      // Reset only specific styles, preserve background
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
 
       console.log('Force cleanup completed');
     };
@@ -1266,15 +1266,15 @@ ${shareUrl}`;
 
     // Farcaster Mini App Integration
     // Check if we're in Farcaster context before loading SDK
-    const isInFarcaster = window.location !== window.parent.location || 
-                         window.navigator.userAgent.includes('Farcaster') ||
-                         document.referrer.includes('farcaster');
-    
+    const isInFarcaster = window.location !== window.parent.location ||
+      window.navigator.userAgent.includes('Farcaster') ||
+      document.referrer.includes('farcaster');
+
     if (isInFarcaster) {
       import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
         // Hide splash screen and show app
         sdk.actions.ready();
-        
+
         console.log('Degenify loaded as Farcaster Mini App');
       }).catch(err => {
         console.log('Farcaster SDK failed to load:', err);
