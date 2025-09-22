@@ -35,10 +35,11 @@
   <meta property="fc:frame:button:1" content="Open Degenify">
   <meta property="fc:frame:button:1:action" content="link">
   <meta property="fc:frame:button:1:target" content="https://www.degenify.xyz">
-  
+
   <!-- Farcaster Mini App Meta Tags -->
-  <meta property="fc:miniapp" content='{"name": "Degenify", "version": "2", "iconUrl": "https://www.degenify.xyz/miniapp-icon.png", "homeUrl": "https://www.degenify.xyz", "imageUrl": "https://www.degenify.xyz/miniapp-icon.png", "buttonTitle": "Open mini app", "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png", "splashBackgroundColor": "#e8d3f4"}'>
-  
+  <meta property="fc:miniapp"
+    content='{"name": "Degenify", "version": "2", "iconUrl": "https://www.degenify.xyz/miniapp-icon.png", "homeUrl": "https://www.degenify.xyz", "imageUrl": "https://www.degenify.xyz/miniapp-icon.png", "buttonTitle": "Open mini app", "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png", "splashBackgroundColor": "#e8d3f4"}'>
+
   <!-- Manifest Link -->
   <link rel="manifest" href="/.well-known/farcaster.json">
 
@@ -1311,45 +1312,26 @@ $DEGEN @degentokenbase`;
       const hasComposeCast = !!(hasSDK && window.farcaster.actions.composeCast);
       const hasAddMiniApp = !!(hasSDK && window.farcaster.actions.addMiniApp);
 
-      const contextIndicators = {
-        isIframe: window.location !== window.parent.location,
-        userAgentFarcaster: window.navigator.userAgent.includes('Farcaster'),
-        referrerFarcaster: (document.referrer && document.referrer.includes('farcaster')),
-        hostnameFarcaster: window.location.hostname.includes('farcaster'),
-        titleFarcaster: document.title.includes('Farcaster'),
-        searchFarcaster: window.location.search.includes('farcaster'),
-        hashFarcaster: window.location.hash.includes('farcaster')
-      };
+      // MOBILE MINIAPP PRIORITY: If mobile, assume Farcaster context and use SDK if available
+      const shouldUseSDK = isMobile ? hasSDK : false; // Desktop gets browser fallback
+      const shouldShowButton = isMobile ? hasAddMiniApp : false; // Only show on mobile
 
-      const isInFarcasterContext = Object.values(contextIndicators).some(v => v);
-
-      // MOBILE-FIRST LOGIC: If mobile and SDK exists, always use it
-      const shouldUseSDK = isMobile ? hasSDK : (isInFarcasterContext && hasSDK);
-      const shouldShowButton = isMobile ? hasAddMiniApp : (isInFarcasterContext && hasAddMiniApp);
-
-      // Extra debugging for mobile
-      if (isMobile) {
-        console.log('📱 MOBILE DETECTED - Extra debugging:');
-        console.log('- hasSDK:', hasSDK);
-        console.log('- hasComposeCast:', hasComposeCast);
-        console.log('- hasAddMiniApp:', hasAddMiniApp);
-        console.log('- shouldUseSDK:', shouldUseSDK);
-        console.log('- shouldShowButton:', shouldShowButton);
-        console.log('- window.farcaster:', !!window.farcaster);
-        if (window.farcaster) {
-          console.log('- SDK actions:', Object.keys(window.farcaster.actions || {}));
-        }
-      }
+      console.log('🔍 SIMPLIFIED DETECTION:');
+      console.log('- isMobile:', isMobile);
+      console.log('- hasSDK:', hasSDK);
+      console.log('- hasComposeCast:', hasComposeCast);
+      console.log('- hasAddMiniApp:', hasAddMiniApp);
+      console.log('- shouldUseSDK:', shouldUseSDK);
+      console.log('- shouldShowButton:', shouldShowButton);
+      console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
 
       return {
         isMobile,
         hasSDK,
         hasComposeCast,
         hasAddMiniApp,
-        isInFarcasterContext,
         shouldUseSDK,
         shouldShowButton,
-        contextIndicators,
         userAgent: window.navigator.userAgent.substring(0, 100)
       };
     };
@@ -1366,10 +1348,10 @@ $DEGEN
 ${shareUrl}`;
 
       const context = window.detectFarcasterContext();
-      console.log('🔍 UNIVERSAL CONTEXT:', context);
+      console.log('🔍 MOBILE-FIRST CONTEXT:', context);
 
-      // Use SDK if we should
-      if (context.shouldUseSDK && context.hasComposeCast) {
+      // MOBILE PRIORITY: Use SDK on mobile if available
+      if (context.isMobile && context.hasComposeCast) {
         console.log('🎯 Using Farcaster SDK for sharing');
         try {
           const result = window.farcaster.actions.composeCast({
@@ -1502,33 +1484,47 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // Show "Add to Home Screen" button using universal detection
-      const updateButtonVisibility = () => {
-        const buttonContext = window.detectFarcasterContext();
-        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+        // MOBILE MINIAPP PRIORITY: Show button on mobile if SDK is available
+        const updateButtonVisibility = () => {
+          const buttonContext = window.detectFarcasterContext();
+          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+          
+          console.log('🔍 Button context check:', buttonContext);
+          
+          // MOBILE FIRST: If mobile, show button when SDK loads
+          if (addToFarcasterBtn && buttonContext.isMobile && buttonContext.hasAddMiniApp) {
+            addToFarcasterBtn.style.display = 'inline-flex';
+            addToFarcasterBtn.style.alignItems = 'center';
+            console.log('✅ MOBILE: Showing Add miniapp button - SDK available');
+          } else if (addToFarcasterBtn && buttonContext.isMobile) {
+            addToFarcasterBtn.style.display = 'none';
+            console.log('❌ MOBILE: Hiding button - SDK not ready yet');
+          } else if (addToFarcasterBtn && !buttonContext.isMobile) {
+            addToFarcasterBtn.style.display = 'none';
+            console.log('❌ DESKTOP: Hiding button - mobile only');
+          }
+        };
 
-        console.log('🔍 Button context check:', buttonContext);
-
-        if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-          addToFarcasterBtn.style.display = 'inline-flex';
-          addToFarcasterBtn.style.alignItems = 'center';
-          console.log('✅ Showing Add to Home Screen button - universal detection says yes');
-        } else if (addToFarcasterBtn) {
-          addToFarcasterBtn.style.display = 'none';
-          console.log('❌ Hiding Add to Home Screen button - universal detection says no');
+        // Initial check
+        updateButtonVisibility();
+        
+        // AGGRESSIVE MOBILE RETRIES: Check every 200ms for 10 seconds on mobile
+        if (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)) {
+          console.log('📱 MOBILE DETECTED - Setting up aggressive retry logic');
+          let attempts = 0;
+          const maxAttempts = 50; // 10 seconds / 200ms
+          const retryInterval = setInterval(() => {
+            attempts++;
+            console.log(`📱 Mobile retry attempt ${attempts}/${maxAttempts}`);
+            updateButtonVisibility();
+            
+            // Stop if SDK is loaded or max attempts reached
+            if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
+              clearInterval(retryInterval);
+              console.log('📱 Mobile retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
+            }
+          }, 200);
         }
-      };
-
-      // Initial check
-      updateButtonVisibility();
-
-      // For mobile, retry button visibility check multiple times in case SDK loads later
-      if (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)) {
-        console.log('📱 Mobile detected - setting up retry logic for button visibility');
-        setTimeout(updateButtonVisibility, 500);
-        setTimeout(updateButtonVisibility, 1000);
-        setTimeout(updateButtonVisibility, 2000);
-      }
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
