@@ -860,6 +860,15 @@
               style="width: 48px; height: 48px;" />
             <span>Degenify</span>
           </h1>
+
+          <button onclick="addToFarcaster()" class="add-to-farcaster-btn"
+            style="display: none; background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="margin-right: 8px; vertical-align: middle;">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            Add miniapp to Farcaster
+          </button>
         </div>
       </div>
     </header>
@@ -1299,10 +1308,46 @@ $DEGEN
 /degen 
 
 ${shareUrl}`;
-      const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
-      window.open(farcasterUrl, '_blank');
-      // Close modal immediately
-      closeShareModal();
+
+      // Check if we're in Farcaster Mini App context
+      if (window.farcaster && window.farcaster.actions) {
+        // Use Farcaster SDK for sharing within Mini App
+        window.farcaster.actions.createCast({
+          cast: {
+            parent: '0x',
+            text: text,
+            embeds: [shareUrl]
+          }
+        }).then(() => {
+          console.log('Cast created successfully');
+          closeShareModal();
+        }).catch(error => {
+          console.error('Failed to create cast:', error);
+          // Fallback to external URL
+          const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
+          window.open(farcasterUrl, '_blank');
+          closeShareModal();
+        });
+      } else {
+        // Fallback for regular browsers
+        const farcasterUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(text)}`;
+        window.open(farcasterUrl, '_blank');
+        closeShareModal();
+      }
+    };
+
+    // Add to Farcaster function
+    window.addToFarcaster = function () {
+      if (window.farcaster && window.farcaster.actions) {
+        window.farcaster.actions.addToHomeScreen().then(() => {
+          console.log('Added miniapp to home screen successfully');
+        }).catch(error => {
+          console.error('Failed to add miniapp to home screen:', error);
+        });
+      } else {
+        // This should not happen since button is only shown when SDK is available
+        console.error('Farcaster SDK not available');
+      }
     };
 
     // Global cleanup function for emergencies
@@ -1353,12 +1398,12 @@ ${shareUrl}`;
   <!-- Farcaster Mini App SDK -->
   <script type="module">
     // More robust Farcaster detection
-    const isInFarcaster = window.location !== window.parent.location || 
-        window.navigator.userAgent.includes('Farcaster') || 
-        document.referrer.includes('farcaster') ||
-        window.location.hostname.includes('farcaster') ||
-        document.title.includes('Farcaster');
-    
+    const isInFarcaster = window.location !== window.parent.location ||
+      window.navigator.userAgent.includes('Farcaster') ||
+      document.referrer.includes('farcaster') ||
+      window.location.hostname.includes('farcaster') ||
+      document.title.includes('Farcaster');
+
     console.log('Farcaster detection:', {
       isInFarcaster,
       isIframe: window.location !== window.parent.location,
@@ -1367,23 +1412,33 @@ ${shareUrl}`;
       hostname: window.location.hostname.includes('farcaster'),
       title: document.title.includes('Farcaster')
     });
-    
-    // Always try to load SDK and call ready() - let Farcaster handle it
-    import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
-      console.log('Farcaster SDK loaded successfully');
-      // Call ready() after a short delay to ensure app is fully loaded
-      setTimeout(() => {
-        sdk.actions.ready();
-        console.log('Called sdk.actions.ready()');
-      }, 100);
-    }).catch(error => {
-      console.error('Failed to load Farcaster SDK:', error);
-      // If SDK fails to load, still try to call ready on window.farcaster if it exists
-      if (window.farcaster && window.farcaster.actions) {
-        window.farcaster.actions.ready();
-        console.log('Called ready() via window.farcaster fallback');
-      }
-    });
+
+    // Only try to load SDK if we're in Farcaster context
+    if (isInFarcaster) {
+      import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
+        console.log('Farcaster SDK loaded successfully');
+        
+        // Show "Add to Farcaster" button only when SDK is actually available
+        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+        if (addToFarcasterBtn) {
+          addToFarcasterBtn.style.display = 'inline-flex';
+          addToFarcasterBtn.style.alignItems = 'center';
+        }
+        
+        // Call ready() after a short delay to ensure app is fully loaded
+        setTimeout(() => {
+          sdk.actions.ready();
+          console.log('Called sdk.actions.ready()');
+        }, 100);
+      }).catch(error => {
+        console.error('Failed to load Farcaster SDK:', error);
+        // If SDK fails to load, still try to call ready on window.farcaster if it exists
+        if (window.farcaster && window.farcaster.actions) {
+          window.farcaster.actions.ready();
+          console.log('Called ready() via window.farcaster fallback');
+        }
+      });
+    }
   </script>
 </body>
 
