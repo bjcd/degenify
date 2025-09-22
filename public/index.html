@@ -1275,10 +1275,6 @@ ${shareUrl}`;
         // Hide splash screen and show app
         sdk.actions.ready();
         
-        // Add white background for Mini App context
-        document.body.style.backgroundColor = '#ffffff';
-        document.documentElement.style.backgroundColor = '#ffffff';
-        
         console.log('Degenify loaded as Farcaster Mini App');
       }).catch(err => {
         console.log('Farcaster SDK failed to load:', err);
