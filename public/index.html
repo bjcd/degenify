@@ -1310,19 +1310,19 @@ $DEGEN
 ${shareUrl}`;
 
       // Smart approach: Check if we're in Farcaster context first
-      const isInFarcaster = window.location !== window.parent.location || 
-          window.navigator.userAgent.includes('Farcaster') || 
-          (document.referrer && document.referrer.includes('farcaster')) ||
-          window.location.hostname.includes('farcaster') ||
-          document.title.includes('Farcaster') ||
-          window.location.search.includes('farcaster') ||
-          window.location.hash.includes('farcaster') ||
-          // Additional mobile-specific checks
-          window.navigator.userAgent.includes('Mobile') && window.farcaster ||
-          window.navigator.userAgent.includes('iPhone') && window.farcaster ||
-          window.navigator.userAgent.includes('Android') && window.farcaster;
+      const isInFarcaster = window.location !== window.parent.location ||
+        window.navigator.userAgent.includes('Farcaster') ||
+        (document.referrer && document.referrer.includes('farcaster')) ||
+        window.location.hostname.includes('farcaster') ||
+        document.title.includes('Farcaster') ||
+        window.location.search.includes('farcaster') ||
+        window.location.hash.includes('farcaster') ||
+        // Additional mobile-specific checks
+        window.navigator.userAgent.includes('Mobile') && window.farcaster ||
+        window.navigator.userAgent.includes('iPhone') && window.farcaster ||
+        window.navigator.userAgent.includes('Android') && window.farcaster;
 
-      console.log('🔍 Sharing context check:', { 
+      console.log('🔍 Sharing context check:', {
         isInFarcaster,
         isIframe: window.location !== window.parent.location,
         userAgent: window.navigator.userAgent,
@@ -1332,9 +1332,10 @@ ${shareUrl}`;
         isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
       });
 
-      if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
-        console.log('🎯 Using Farcaster SDK - in miniapp context');
-        // Use native SDK (miniapp)
+      // Try SDK first if available, regardless of detection (mobile miniapp might not detect properly)
+      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('🎯 Trying Farcaster SDK first - available');
+        // Try native SDK first
         window.farcaster.actions.composeCast({
           text: text,
           embeds: [shareUrl]
@@ -1348,8 +1349,33 @@ ${shareUrl}`;
           window.open(farcasterUrl, '_blank');
           closeShareModal();
         });
+      } else if (isInFarcaster) {
+        console.log('🔄 In Farcaster context but no SDK - waiting and retrying');
+        // We're in Farcaster but SDK not ready yet - wait a bit and try again
+        setTimeout(() => {
+          if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+            console.log('🎯 SDK now available after wait - trying again');
+            window.farcaster.actions.composeCast({
+              text: text,
+              embeds: [shareUrl]
+            }).then(() => {
+              console.log('✅ Delayed SDK sharing successful');
+              closeShareModal();
+            }).catch(error => {
+              console.log('❌ Delayed SDK failed, falling back to browser:', error);
+              const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+              window.open(farcasterUrl, '_blank');
+              closeShareModal();
+            });
+          } else {
+            console.log('🌐 SDK still not available after wait - using browser method');
+            const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+            window.open(farcasterUrl, '_blank');
+            closeShareModal();
+          }
+        }, 500);
       } else {
-        console.log('🌐 Using browser method - desktop or no SDK');
+        console.log('🌐 Using browser method - not in Farcaster context');
         // Use external URL (desktop browser)
         const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
@@ -1454,36 +1480,36 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-        // Show "Add to Home Screen" button only when in Farcaster context and SDK is available
-        const buttonIsInFarcaster = window.location !== window.parent.location || 
-            window.navigator.userAgent.includes('Farcaster') || 
-            (document.referrer && document.referrer.includes('farcaster')) ||
-            window.location.hostname.includes('farcaster') ||
-            document.title.includes('Farcaster') ||
-            window.location.search.includes('farcaster') ||
-            window.location.hash.includes('farcaster') ||
-            // Additional mobile-specific checks
-            window.navigator.userAgent.includes('Mobile') && window.farcaster ||
-            window.navigator.userAgent.includes('iPhone') && window.farcaster ||
-            window.navigator.userAgent.includes('Android') && window.farcaster;
+      // Show "Add to Home Screen" button only when in Farcaster context and SDK is available
+      const buttonIsInFarcaster = window.location !== window.parent.location ||
+        window.navigator.userAgent.includes('Farcaster') ||
+        (document.referrer && document.referrer.includes('farcaster')) ||
+        window.location.hostname.includes('farcaster') ||
+        document.title.includes('Farcaster') ||
+        window.location.search.includes('farcaster') ||
+        window.location.hash.includes('farcaster') ||
+        // Additional mobile-specific checks
+        window.navigator.userAgent.includes('Mobile') && window.farcaster ||
+        window.navigator.userAgent.includes('iPhone') && window.farcaster ||
+        window.navigator.userAgent.includes('Android') && window.farcaster;
 
-        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-        const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
-        
-        console.log('🔍 Button check:', { 
-          buttonIsInFarcaster, 
-          sdkAvailable,
-          isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
-        });
-        
-        if (addToFarcasterBtn && buttonIsInFarcaster && sdkAvailable) {
-          addToFarcasterBtn.style.display = 'inline-flex';
-          addToFarcasterBtn.style.alignItems = 'center';
-          console.log('✅ Showing Add to Home Screen button - in Farcaster with SDK');
-        } else if (addToFarcasterBtn) {
-          addToFarcasterBtn.style.display = 'none';
-          console.log('❌ Hiding Add to Home Screen button - not in Farcaster or no SDK');
-        }
+      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+      const sdkAvailable = !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp);
+
+      console.log('🔍 Button check:', {
+        buttonIsInFarcaster,
+        sdkAvailable,
+        isMobile: /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)
+      });
+
+      if (addToFarcasterBtn && buttonIsInFarcaster && sdkAvailable) {
+        addToFarcasterBtn.style.display = 'inline-flex';
+        addToFarcasterBtn.style.alignItems = 'center';
+        console.log('✅ Showing Add to Home Screen button - in Farcaster with SDK');
+      } else if (addToFarcasterBtn) {
+        addToFarcasterBtn.style.display = 'none';
+        console.log('❌ Hiding Add to Home Screen button - not in Farcaster or no SDK');
+      }
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
