@@ -1,28 +1,31 @@
 {
-    "name": "Degenify",
-    "description": "Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.",
-    "icon": "https://www.degenify.xyz/miniapp-icon.png",
-    "url": "www.degenify.xyz",
-    "version": "1.0.0",
-    "author": "standpoint.eth",
-    "category": "entertainment",
-    "tags": [
-        "ai",
-        "image-generation",
-        "meme",
-        "fun",
-        "degen"
-    ],
-    "screenshots": [
-        "https://www.degenify.xyz/miniapp-icon.png"
-    ],
-    "permissions": [],
-    "features": [
-        "image-generation",
-        "sharing",
-        "gallery"
-    ],
-    "splashBackgroundColor": "#e8d3f4",
+    "frame": {
+        "name": "Degenify",
+        "version": "1",
+        "iconUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "homeUrl": "https://www.degenify.xyz",
+        "imageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "buttonTitle": "Open mini app",
+        "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "splashBackgroundColor": "#e8d3f4",
+        "subtitle": "Create unique, fun Degen images instantly.",
+        "description": "Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.",
+        "primaryCategory": "entertainment",
+        "screenshotUrls": [
+            "https://www.degenify.xyz/miniapp-screenshot.png"
+        ],
+        "heroImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "tags": [
+            "social",
+            "community",
+            "degen",
+            "genai",
+            "ai"
+        ],
+        "tagline": "Degenify everything",
+        "ogImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "ogTitle": "Degenify"
+    },
     "accountAssociation": {
         "header": "eyJmaWQiOjE3MDY0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4MjUxMzk5NkZENzNBNmZCNDQ2YTZBNmRhNDE1NEVjNTAzZURhYjhEMiJ9",
         "payload": "eyJkb21haW4iOiJ3d3cuZGVnZW5pZnkueHl6In0",
