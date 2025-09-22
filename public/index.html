@@ -1202,6 +1202,28 @@
 
     // Download image function - make it globally accessible
     window.downloadImage = function (imageId) {
+      const context = window.detectFarcasterContext();
+      console.log('🔽 Download attempt in context:', context);
+      
+      // MINIAPP CONTEXT: Use direct navigation instead of programmatic download
+      if (context.hasSDK || context.isInFarcaster) {
+        console.log('🔽 MINIAPP: Opening download URL directly');
+        const downloadUrl = `${window.location.origin}/api/download/${imageId}`;
+        
+        // Try to open in new tab/window - miniapp should handle this
+        try {
+          window.open(downloadUrl, '_blank');
+          console.log('✅ MINIAPP: Opened download URL in new tab');
+        } catch (error) {
+          console.log('❌ MINIAPP: New tab failed, trying direct navigation');
+          // Fallback: direct navigation
+          window.location.href = downloadUrl;
+        }
+        return;
+      }
+      
+      // REGULAR BROWSER: Use programmatic download
+      console.log('🔽 BROWSER: Using programmatic download');
       fetch(`/api/download/${imageId}`)
         .then(response => {
           if (!response.ok) {
@@ -1218,9 +1240,10 @@
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
+          console.log('✅ BROWSER: Download completed');
         })
         .catch(error => {
-          console.error('Download error:', error);
+          console.error('❌ Download failed:', error);
           alert('Download failed: ' + error.message);
         });
     };
