@@ -1448,38 +1448,54 @@ ${shareUrl}`;
           console.log('❌ Hiding Add to Home Screen button - no SDK');
         }
 
-        // Aggressive ready() calls for mobile compatibility
-        const callReady = (delay, label) => {
-          setTimeout(() => {
-            try {
-              if (sdk && sdk.actions && sdk.actions.ready) {
-                sdk.actions.ready();
-                console.log(`✅ Called sdk.actions.ready() - ${label}`);
-              } else {
-                console.log(`❌ SDK not available for ready() call - ${label}`);
-              }
-            } catch (e) {
-              console.log(`❌ Ready() call failed - ${label}:`, e);
+        // Mobile-specific ready() solution - wait for full SDK initialization
+        let readyCallCount = 0;
+        const maxReadyAttempts = 20;
+        
+        const waitForSDKAndCallReady = () => {
+          readyCallCount++;
+          console.log(`🔄 Ready attempt ${readyCallCount}/${maxReadyAttempts}`);
+          
+          try {
+            // Check if SDK is fully initialized
+            if (sdk && sdk.actions && typeof sdk.actions.ready === 'function') {
+              console.log('📱 SDK fully available, calling ready()...');
+              sdk.actions.ready();
+              console.log('✅ Successfully called sdk.actions.ready()!');
+              return; // Success, stop trying
+            } else {
+              console.log('⏳ SDK not fully ready yet, will retry...');
             }
-          }, delay);
+          } catch (error) {
+            console.log('❌ Ready() call failed:', error);
+          }
+          
+          // If we haven't succeeded and haven't reached max attempts, try again
+          if (readyCallCount < maxReadyAttempts) {
+            setTimeout(waitForSDKAndCallReady, 200); // Try every 200ms
+          } else {
+            console.log('🚨 Max ready() attempts reached, giving up');
+            // Last ditch effort - try calling on window.farcaster if it exists
+            if (window.farcaster && window.farcaster.actions && window.farcaster.actions.ready) {
+              try {
+                window.farcaster.actions.ready();
+                console.log('✅ Fallback ready() call successful');
+              } catch (e) {
+                console.log('❌ Fallback ready() call failed:', e);
+              }
+            }
+          }
         };
 
-        // Multiple ready() calls with different delays for mobile
-        callReady(0, 'immediate');
-        callReady(50, '50ms');
-        callReady(100, '100ms');
-        callReady(250, '250ms');
-        callReady(500, '500ms');
-        callReady(1000, '1000ms');
-        callReady(2000, '2000ms');
+        // Start the ready() attempts immediately
+        waitForSDKAndCallReady();
 
-        // Also call ready when DOM is fully loaded
+        // Also try when DOM is fully loaded as backup
         if (document.readyState === 'complete') {
-          callReady(0, 'DOM complete');
+          setTimeout(waitForSDKAndCallReady, 100);
         } else {
           window.addEventListener('load', () => {
-            callReady(0, 'window load');
-            callReady(100, 'window load + 100ms');
+            setTimeout(waitForSDKAndCallReady, 100);
           });
         }
       }).catch(error => {
