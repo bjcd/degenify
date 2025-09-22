@@ -1309,10 +1309,27 @@ $DEGEN
 
 ${shareUrl}`;
 
-      // Simple approach: try SDK first, fallback to external URL
-      if (window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
-        console.log('Using Farcaster SDK for sharing');
-        // Use Farcaster SDK for sharing within Mini App
+      // Check if we're in Farcaster Mini App context
+      const isInFarcaster = window.location !== window.parent.location || 
+          window.navigator.userAgent.includes('Farcaster') || 
+          (document.referrer && document.referrer.includes('farcaster')) ||
+          window.location.hostname.includes('farcaster') ||
+          document.title.includes('Farcaster') ||
+          window.location.search.includes('farcaster') ||
+          window.location.hash.includes('farcaster');
+
+      console.log('Farcaster context detection:', {
+        isInFarcaster,
+        isIframe: window.location !== window.parent.location,
+        userAgent: window.navigator.userAgent.includes('Farcaster'),
+        referrer: document.referrer,
+        hostname: window.location.hostname,
+        title: document.title
+      });
+
+      if (isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.composeCast) {
+        console.log('Using Farcaster SDK for miniapp sharing');
+        // Farcaster Mini App - use native SDK
         window.farcaster.actions.composeCast({
           text: text,
           embeds: [shareUrl]
@@ -1321,14 +1338,11 @@ ${shareUrl}`;
           closeShareModal();
         }).catch(error => {
           console.error('Failed to open cast composer:', error);
-          // Fallback to external URL
-          const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
-          window.open(farcasterUrl, '_blank');
           closeShareModal();
         });
       } else {
-        console.log('Using external Farcaster URL');
-        // Regular browser - use external URL (Warpcast compose)
+        console.log('Using browser Farcaster sharing');
+        // Regular browser - use external URL
         const farcasterUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
         window.open(farcasterUrl, '_blank');
         closeShareModal();
@@ -1432,13 +1446,18 @@ ${shareUrl}`;
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
       // Show "Add to Farcaster" button only when in Farcaster context and SDK is available
-      const isInFarcaster = window.location !== window.parent.location ||
-        window.navigator.userAgent.includes('Farcaster') ||
-        (document.referrer && document.referrer.includes('farcaster')) ||
-        window.location.hostname.includes('farcaster') ||
-        document.title.includes('Farcaster') ||
-        window.location.search.includes('farcaster') ||
-        window.location.hash.includes('farcaster');
+      const isInFarcaster = window.location !== window.parent.location || 
+          window.navigator.userAgent.includes('Farcaster') || 
+          (document.referrer && document.referrer.includes('farcaster')) ||
+          window.location.hostname.includes('farcaster') ||
+          document.title.includes('Farcaster') ||
+          window.location.search.includes('farcaster') ||
+          window.location.hash.includes('farcaster');
+
+      console.log('Button visibility check:', {
+        isInFarcaster,
+        sdkAvailable: !!(window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp)
+      });
 
       const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
       if (addToFarcasterBtn && isInFarcaster && window.farcaster && window.farcaster.actions && window.farcaster.actions.addMiniApp) {
