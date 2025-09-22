@@ -84,11 +84,11 @@
       --destructive-foreground: 210 40% 98%;
 
       /* Enhanced gradients for slicker look */
+      --gradient-mesh: linear-gradient(0deg, rgba(255, 255, 255, 0.06) 2%, rgba(255, 255, 255, 0.03) 7%, rgba(139, 59, 237, 0.05) 12%, rgba(204, 102, 255, 0.08) 100%);
       --gradient-primary: linear-gradient(135deg, hsl(267 83% 58%), hsl(280 100% 70%), hsl(290 100% 75%));
       --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(267 15% 98%));
       --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(267 20% 97%) 100%);
       --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(267 83% 58% / 0.1));
-      --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(267 83% 58% / 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, hsl(280 100% 70% / 0.3) 0%, transparent 50%);
 
       /* Enhanced shadows */
       --shadow-soft: 0 4px 20px hsl(267 83% 58% / 0.15);
@@ -120,6 +120,7 @@
     }
 
     html {
+      background: var(--gradient-mesh);
       scroll-behavior: smooth;
     }
 
@@ -294,13 +295,14 @@
       background: var(--gradient-primary);
     }
 
+    .bg-gradient-mesh {
+      background: var(--gradient-mesh);
+    }
+
     .bg-gradient-subtle {
       background: var(--gradient-subtle);
     }
 
-    .bg-gradient-mesh {
-      background: var(--gradient-mesh);
-    }
 
     .shadow-glow {
       box-shadow: var(--shadow-glow);
@@ -1269,6 +1271,14 @@ ${shareUrl}`;
     const isInFarcaster = window.location !== window.parent.location ||
       window.navigator.userAgent.includes('Farcaster') ||
       document.referrer.includes('farcaster');
+
+    console.log('Farcaster detection:', {
+      isInFarcaster,
+      isIframe: window.location !== window.parent.location,
+      userAgent: window.navigator.userAgent.includes('Farcaster'),
+      referrer: document.referrer.includes('farcaster'),
+      referrerValue: document.referrer
+    });
 
     if (isInFarcaster) {
       import('https://esm.sh/@farcaster/miniapp-sdk').then(({ sdk }) => {
