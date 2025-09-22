@@ -1317,9 +1317,23 @@ $DEGEN @degentokenbase`;
 
       const isInFarcasterContext = Object.values(contextIndicators).some(v => v);
 
-      // Final decision logic: Use SDK if mobile+SDK OR farcaster context+SDK
-      const shouldUseSDK = (isMobile && hasSDK) || (isInFarcasterContext && hasSDK);
-      const shouldShowButton = (isMobile && hasAddMiniApp) || (isInFarcasterContext && hasAddMiniApp);
+      // MOBILE-FIRST LOGIC: If mobile and SDK exists, always use it
+      const shouldUseSDK = isMobile ? hasSDK : (isInFarcasterContext && hasSDK);
+      const shouldShowButton = isMobile ? hasAddMiniApp : (isInFarcasterContext && hasAddMiniApp);
+      
+      // Extra debugging for mobile
+      if (isMobile) {
+        console.log('📱 MOBILE DETECTED - Extra debugging:');
+        console.log('- hasSDK:', hasSDK);
+        console.log('- hasComposeCast:', hasComposeCast);
+        console.log('- hasAddMiniApp:', hasAddMiniApp);
+        console.log('- shouldUseSDK:', shouldUseSDK);
+        console.log('- shouldShowButton:', shouldShowButton);
+        console.log('- window.farcaster:', !!window.farcaster);
+        if (window.farcaster) {
+          console.log('- SDK actions:', Object.keys(window.farcaster.actions || {}));
+        }
+      }
 
       return {
         isMobile,
@@ -1482,20 +1496,33 @@ ${shareUrl}`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // Show "Add to Home Screen" button using universal detection
-      const buttonContext = window.detectFarcasterContext();
-      const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+        // Show "Add to Home Screen" button using universal detection
+        const updateButtonVisibility = () => {
+          const buttonContext = window.detectFarcasterContext();
+          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+          
+          console.log('🔍 Button context check:', buttonContext);
+          
+          if (addToFarcasterBtn && buttonContext.shouldShowButton) {
+            addToFarcasterBtn.style.display = 'inline-flex';
+            addToFarcasterBtn.style.alignItems = 'center';
+            console.log('✅ Showing Add to Home Screen button - universal detection says yes');
+          } else if (addToFarcasterBtn) {
+            addToFarcasterBtn.style.display = 'none';
+            console.log('❌ Hiding Add to Home Screen button - universal detection says no');
+          }
+        };
 
-      console.log('🔍 Button context check:', buttonContext);
-
-      if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-        addToFarcasterBtn.style.display = 'inline-flex';
-        addToFarcasterBtn.style.alignItems = 'center';
-        console.log('✅ Showing Add to Home Screen button - universal detection says yes');
-      } else if (addToFarcasterBtn) {
-        addToFarcasterBtn.style.display = 'none';
-        console.log('❌ Hiding Add to Home Screen button - universal detection says no');
-      }
+        // Initial check
+        updateButtonVisibility();
+        
+        // For mobile, retry button visibility check multiple times in case SDK loads later
+        if (/Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent)) {
+          console.log('📱 Mobile detected - setting up retry logic for button visibility');
+          setTimeout(updateButtonVisibility, 500);
+          setTimeout(updateButtonVisibility, 1000);
+          setTimeout(updateButtonVisibility, 2000);
+        }
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
