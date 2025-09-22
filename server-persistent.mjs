@@ -211,6 +211,7 @@ app.get('/api/share/:id', async (req, res) => {
 
         const image = result.rows[0];
         const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${imageId}`;
+        const cloudinaryUrl = image.cloudinary_url;
         
         const html = `
 <!DOCTYPE html>
@@ -226,17 +227,22 @@ app.get('/api/share/:id', async (req, res) => {
     <meta property="og:url" content="${req.protocol}://${req.get('host')}/api/share/${imageId}">
     <meta property="og:title" content="Epic Degeneration by Degenify">
     <meta property="og:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
-    <meta property="og:image" content="${imageUrl}">
+    <meta property="og:image" content="${cloudinaryUrl}">
+    <meta property="og:image:url" content="${cloudinaryUrl}">
     <meta property="og:image:width" content="1024">
     <meta property="og:image:height" content="1024">
     <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Epic Degeneration by Degenify">
     
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="${req.protocol}://${req.get('host')}/api/share/${imageId}">
-    <meta property="twitter:title" content="Epic Degeneration by Degenify">
-    <meta property="twitter:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
-    <meta property="twitter:image" content="${imageUrl}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@degentokenbase">
+    <meta name="twitter:creator" content="@degentokenbase">
+    <meta name="twitter:url" content="${req.protocol}://${req.get('host')}/api/share/${imageId}">
+    <meta name="twitter:title" content="Epic Degeneration by Degenify">
+    <meta name="twitter:description" content="Check out this epic degeneration I created with Degenify! 🎩 🔥 $DEGEN">
+    <meta name="twitter:image" content="${cloudinaryUrl}">
+    <meta name="twitter:image:alt" content="Epic Degeneration by Degenify">
     
     <style>
         body { 
