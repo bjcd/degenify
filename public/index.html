@@ -876,7 +876,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1201,8 +1201,8 @@
     }
 
     // Download image function - make it globally accessible
-    window.downloadImage = function (imageId) {
-      const context = window.detectFarcasterContext();
+    window.downloadImage = async function (imageId) {
+      const context = await window.detectFarcasterContext();
       console.log('🔽 Download attempt in context:', context);
 
       // MINIAPP: Use navigation-based download, WEBSITE: Use programmatic download
@@ -1328,55 +1328,77 @@ $DEGEN @degentokenbase`;
       closeShareModal();
     };
 
-    // UNIVERSAL Farcaster detection function
-    window.detectFarcasterContext = function () {
+    // OFFICIAL Farcaster SDK detection function
+    window.detectFarcasterContext = async function () {
       const isMobile = /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent);
+      
+      // Use official SDK methods for reliable detection
+      let isInMiniApp = false;
+      let platform = 'web';
+      let client = null;
+      
+      if (window.farcaster && window.farcaster.isInMiniApp) {
+        try {
+          isInMiniApp = await window.farcaster.isInMiniApp();
+          console.log('🔍 SDK isInMiniApp():', isInMiniApp);
+        } catch (error) {
+          console.log('❌ isInMiniApp() failed:', error);
+        }
+      }
+      
+      if (window.farcaster && window.farcaster.context) {
+        try {
+          const ctx = await window.farcaster.context();
+          platform = ctx.platform || 'web';
+          client = ctx.client?.id || null;
+          console.log('🔍 SDK context():', { platform, client });
+        } catch (error) {
+          console.log('❌ context() failed:', error);
+        }
+      }
+      
+      // Determine environment
+      const isFarcasterMiniapp = isInMiniApp;
+      const isMiniappMobile = isInMiniApp && platform === 'mobile';
+      const isMiniappDesktop = isInMiniApp && platform === 'web';
+      const isWebsite = !isInMiniApp;
+      
+      // Capabilities check
       const hasSDK = !!(window.farcaster && window.farcaster.actions);
       const hasComposeCast = !!(hasSDK && window.farcaster.actions.composeCast);
       const hasAddMiniApp = !!(hasSDK && window.farcaster.actions.addMiniApp);
+      
+      // Decision logic
+      const shouldUseSDK = isFarcasterMiniapp && hasComposeCast;
+      const shouldShowButton = isFarcasterMiniapp && hasAddMiniApp;
 
-      // CAPABILITY-BASED DETECTION: Check if required capabilities are available
-      const requiredCapabilities = ['composeCast', 'addMiniApp'];
-      const hasRequiredCapabilities = requiredCapabilities.every(capability => 
-        hasSDK && window.farcaster.actions && typeof window.farcaster.actions[capability] === 'function'
-      );
-
-      // STRICT MINIAPP ENVIRONMENT: Only true if ALL required capabilities are functional
-      const isFarcasterMiniapp = hasSDK && hasRequiredCapabilities && 
-        (window.farcaster.actions.composeCast !== undefined) && 
-        (window.farcaster.actions.addMiniApp !== undefined);
-
-      const shouldUseSDK = isFarcasterMiniapp;
-      const shouldShowButton = isFarcasterMiniapp;
-
-      console.log('🔍 CAPABILITY-BASED DETECTION:');
-      console.log('- isMobile:', isMobile);
+      console.log('🔍 OFFICIAL SDK DETECTION:');
+      console.log('- isMobile (UA):', isMobile);
+      console.log('- isInMiniApp:', isInMiniApp);
+      console.log('- platform:', platform);
+      console.log('- client:', client);
+      console.log('- isFarcasterMiniapp:', isFarcasterMiniapp);
+      console.log('- isMiniappMobile:', isMiniappMobile);
+      console.log('- isMiniappDesktop:', isMiniappDesktop);
+      console.log('- isWebsite:', isWebsite);
       console.log('- hasSDK:', hasSDK);
       console.log('- hasComposeCast:', hasComposeCast);
       console.log('- hasAddMiniApp:', hasAddMiniApp);
-      console.log('- hasRequiredCapabilities:', hasRequiredCapabilities);
-      console.log('- isFarcasterMiniapp:', isFarcasterMiniapp);
       console.log('- shouldUseSDK:', shouldUseSDK);
       console.log('- shouldShowButton:', shouldShowButton);
-      console.log('- User Agent:', window.navigator.userAgent.substring(0, 50));
-      console.log('- window.farcaster:', window.farcaster);
-      console.log('- window.farcaster.actions:', window.farcaster?.actions);
-      
-      // Test if capabilities are actually functional
-      if (hasSDK && window.farcaster.actions) {
-        console.log('- composeCast type:', typeof window.farcaster.actions.composeCast);
-        console.log('- addMiniApp type:', typeof window.farcaster.actions.addMiniApp);
-        console.log('- composeCast function?', typeof window.farcaster.actions.composeCast === 'function');
-        console.log('- addMiniApp function?', typeof window.farcaster.actions.addMiniApp === 'function');
-      }
 
       return {
         isMobile,
+        isInMiniApp,
+        platform,
+        client,
+        isFarcasterMiniapp,
+        isMiniappMobile,
+        isMiniappDesktop,
+        isWebsite,
         hasSDK,
         hasComposeCast,
         hasAddMiniApp,
-        hasRequiredCapabilities,
-        isFarcasterMiniapp,
         shouldUseSDK,
         shouldShowButton,
         userAgent: window.navigator.userAgent.substring(0, 100)
@@ -1384,7 +1406,7 @@ $DEGEN @degentokenbase`;
     };
 
     // Share to Farcaster - make globally accessible
-    window.shareToFarcaster = function (imageId) {
+    window.shareToFarcaster = async function (imageId) {
       const shareUrl = `${window.location.origin}/api/share/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 
 
@@ -1393,7 +1415,7 @@ ${shareUrl}
 $DEGEN /degen 
 Create yours on www.degenify.xyz`;
 
-      const context = window.detectFarcasterContext();
+      const context = await window.detectFarcasterContext();
       console.log('🔍 SHARE CONTEXT:', context);
       console.log('🔍 SHARE: isFarcasterMiniapp =', context.isFarcasterMiniapp);
 
@@ -1545,23 +1567,23 @@ Create yours on www.degenify.xyz`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-      // FIXED: Show button whenever SDK is available (mobile or desktop miniapp)
-      const updateButtonVisibility = () => {
-        const buttonContext = window.detectFarcasterContext();
-        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-
-        console.log('🔍 Button context check:', buttonContext);
-
-        // FIXED: Show button when SDK is available (miniapp context)
-        if (addToFarcasterBtn && buttonContext.shouldShowButton) {
-          addToFarcasterBtn.style.display = 'inline-flex';
-          addToFarcasterBtn.style.alignItems = 'center';
-          console.log('✅ SHOWING Add miniapp button - SDK available');
-        } else if (addToFarcasterBtn) {
-          addToFarcasterBtn.style.display = 'none';
-          console.log('❌ HIDING button - SDK not ready yet');
-        }
-      };
+        // OFFICIAL SDK: Show button only in miniapp context
+        const updateButtonVisibility = async () => {
+          const buttonContext = await window.detectFarcasterContext();
+          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+          
+          console.log('🔍 Button context check:', buttonContext);
+          
+          // Show button only in actual miniapp context
+          if (addToFarcasterBtn && buttonContext.isFarcasterMiniapp && buttonContext.shouldShowButton) {
+            addToFarcasterBtn.style.display = 'inline-flex';
+            addToFarcasterBtn.style.alignItems = 'center';
+            console.log('✅ SHOWING Add miniapp button - in miniapp context');
+          } else if (addToFarcasterBtn) {
+            addToFarcasterBtn.style.display = 'none';
+            console.log('❌ HIDING button - not in miniapp context or SDK not ready');
+          }
+        };
 
       // Initial check
       updateButtonVisibility();
@@ -1570,17 +1592,17 @@ Create yours on www.degenify.xyz`;
       console.log('🔄 Setting up aggressive retry logic for SDK loading');
       let attempts = 0;
       const maxAttempts = 50; // 10 seconds / 200ms
-      const retryInterval = setInterval(() => {
-        attempts++;
-        console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
-        updateButtonVisibility();
-
-        // Stop if SDK is loaded or max attempts reached
-        if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
-          clearInterval(retryInterval);
-          console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
-        }
-      }, 200);
+        const retryInterval = setInterval(async () => {
+          attempts++;
+          console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
+          await updateButtonVisibility();
+          
+          // Stop if SDK is loaded or max attempts reached
+          if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
+            clearInterval(retryInterval);
+            console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
+          }
+        }, 200);
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
