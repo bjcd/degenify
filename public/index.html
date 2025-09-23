@@ -876,7 +876,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1331,12 +1331,12 @@ $DEGEN @degentokenbase`;
     // OFFICIAL Farcaster SDK detection function
     window.detectFarcasterContext = async function () {
       const isMobile = /Mobile|iPhone|iPad|Android/i.test(window.navigator.userAgent);
-      
+
       // Use official SDK methods for reliable detection
       let isInMiniApp = false;
       let platform = 'web';
       let client = null;
-      
+
       if (window.farcaster && window.farcaster.isInMiniApp) {
         try {
           isInMiniApp = await window.farcaster.isInMiniApp();
@@ -1345,7 +1345,7 @@ $DEGEN @degentokenbase`;
           console.log('❌ isInMiniApp() failed:', error);
         }
       }
-      
+
       if (window.farcaster && window.farcaster.context) {
         try {
           const ctx = await window.farcaster.context();
@@ -1356,18 +1356,18 @@ $DEGEN @degentokenbase`;
           console.log('❌ context() failed:', error);
         }
       }
-      
+
       // Determine environment
       const isFarcasterMiniapp = isInMiniApp;
       const isMiniappMobile = isInMiniApp && platform === 'mobile';
       const isMiniappDesktop = isInMiniApp && platform === 'web';
       const isWebsite = !isInMiniApp;
-      
+
       // Capabilities check
       const hasSDK = !!(window.farcaster && window.farcaster.actions);
       const hasComposeCast = !!(hasSDK && window.farcaster.actions.composeCast);
       const hasAddMiniApp = !!(hasSDK && window.farcaster.actions.addMiniApp);
-      
+
       // Decision logic
       const shouldUseSDK = isFarcasterMiniapp && hasComposeCast;
       const shouldShowButton = isFarcasterMiniapp && hasAddMiniApp;
@@ -1546,14 +1546,14 @@ Create yours on www.degenify.xyz`;
 
       // Make SDK globally available
       window.farcaster = sdk;
-      
+
       // Validate SDK has required capabilities
-      const hasValidCapabilities = sdk.actions && 
-        typeof sdk.actions.composeCast === 'function' && 
+      const hasValidCapabilities = sdk.actions &&
+        typeof sdk.actions.composeCast === 'function' &&
         typeof sdk.actions.addMiniApp === 'function';
-      
+
       console.log('SDK capabilities validation:', hasValidCapabilities);
-      
+
       if (!hasValidCapabilities) {
         console.log('⚠️ SDK loaded but lacks required capabilities - treating as regular browser');
         // Don't expose SDK if capabilities are missing
@@ -1567,23 +1567,23 @@ Create yours on www.degenify.xyz`;
       console.log('composeCast available:', !!sdk.actions.composeCast);
       console.log('addMiniApp available:', !!sdk.actions.addMiniApp);
 
-        // OFFICIAL SDK: Show button only in miniapp context
-        const updateButtonVisibility = async () => {
-          const buttonContext = await window.detectFarcasterContext();
-          const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
-          
-          console.log('🔍 Button context check:', buttonContext);
-          
-          // Show button only in actual miniapp context
-          if (addToFarcasterBtn && buttonContext.isFarcasterMiniapp && buttonContext.shouldShowButton) {
-            addToFarcasterBtn.style.display = 'inline-flex';
-            addToFarcasterBtn.style.alignItems = 'center';
-            console.log('✅ SHOWING Add miniapp button - in miniapp context');
-          } else if (addToFarcasterBtn) {
-            addToFarcasterBtn.style.display = 'none';
-            console.log('❌ HIDING button - not in miniapp context or SDK not ready');
-          }
-        };
+      // OFFICIAL SDK: Show button only in miniapp context
+      const updateButtonVisibility = async () => {
+        const buttonContext = await window.detectFarcasterContext();
+        const addToFarcasterBtn = document.querySelector('.add-to-farcaster-btn');
+
+        console.log('🔍 Button context check:', buttonContext);
+
+        // Show button only in actual miniapp context
+        if (addToFarcasterBtn && buttonContext.isFarcasterMiniapp && buttonContext.shouldShowButton) {
+          addToFarcasterBtn.style.display = 'inline-flex';
+          addToFarcasterBtn.style.alignItems = 'center';
+          console.log('✅ SHOWING Add miniapp button - in miniapp context');
+        } else if (addToFarcasterBtn) {
+          addToFarcasterBtn.style.display = 'none';
+          console.log('❌ HIDING button - not in miniapp context or SDK not ready');
+        }
+      };
 
       // Initial check
       updateButtonVisibility();
@@ -1592,17 +1592,17 @@ Create yours on www.degenify.xyz`;
       console.log('🔄 Setting up aggressive retry logic for SDK loading');
       let attempts = 0;
       const maxAttempts = 50; // 10 seconds / 200ms
-        const retryInterval = setInterval(async () => {
-          attempts++;
-          console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
-          await updateButtonVisibility();
-          
-          // Stop if SDK is loaded or max attempts reached
-          if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
-            clearInterval(retryInterval);
-            console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
-          }
-        }, 200);
+      const retryInterval = setInterval(async () => {
+        attempts++;
+        console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
+        await updateButtonVisibility();
+
+        // Stop if SDK is loaded or max attempts reached
+        if (window.farcaster?.actions?.addMiniApp || attempts >= maxAttempts) {
+          clearInterval(retryInterval);
+          console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
+        }
+      }, 200);
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
