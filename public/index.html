@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1778,7 +1778,7 @@
         console.log('🔍 User wallet address:', fromAddress);
 
         // Trigger native sendToken for 50 DEGEN to treasury wallet
-        const DEGEN_CONTRACT = '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed';
+        const DEGEN_CONTRACT = 'eip155:8453/erc20:0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed'; // CAIP-19 format for DEGEN on Base
         const DEGEN_AMOUNT = '50000000000000000000'; // 50 DEGEN with 18 decimals
         const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488';
 
