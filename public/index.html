@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1340,9 +1340,12 @@
           try {
             // Read context directly (no parentheses - it's a property!)
             const ctx = window.farcaster.context;
-            platform = ctx.platform || 'web';
-            client = ctx.client?.id || null;
-            console.log('🔍 SDK context:', { platform, client });
+            console.log('🔍 Raw SDK context:', ctx);
+            
+            // Extract platform and client values properly
+            platform = typeof ctx.platform === 'function' ? 'web' : (ctx.platform || 'web');
+            client = typeof ctx.client === 'function' ? null : (ctx.client?.id || null);
+            console.log('🔍 SDK context values:', { platform, client });
           } catch (error) {
             console.log('❌ context access failed:', error);
           }
@@ -1383,18 +1386,18 @@
       try {
         if (window.farcaster && window.farcaster.context) {
           console.log('🔍 Getting PFP from sdk.context directly...');
-          
+
           // Read sdk.context directly (no parentheses - it's a property!)
           const context = window.farcaster.context;
           console.log('🔍 Farcaster context:', context);
-          
+
           // Try to get PFP from context.user.pfpUrl
           if (context?.user?.pfpUrl) {
             userPfpUrl = context.user.pfpUrl;
             console.log('✅ User PFP URL from context.user:', userPfpUrl);
             return userPfpUrl;
           }
-          
+
           // Fallback: try to get PFP from cast author if launched from a cast
           if (context?.location?.type === 'cast_embed' || context?.location?.type === 'cast_share') {
             const fallbackPfp = context.location.cast?.author?.pfpUrl;
@@ -1404,7 +1407,7 @@
               return userPfpUrl;
             }
           }
-          
+
           console.log('❌ No pfpUrl found in context.user or cast author');
           return null;
         } else {
@@ -1465,6 +1468,7 @@
         try {
           await updatePfpVisibility();
           // Also try to initialize PFP when SDK is ready
+          console.log('🔍 Calling initializeUserPfp from retry mechanism...');
           await initializeUserPfp();
         } catch (error) {
           console.log('❌ Error in updatePfpVisibility from retry:', error);
