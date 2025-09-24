@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1427,46 +1427,55 @@
 
         console.log('🔍 Getting user PFP from miniapp viewer context...');
 
-        // Try to get viewer context - this should contain the user's PFP
         try {
-          // Access the viewer context directly
-          const context = sdk.context;
-          console.log('🔍 Raw context:', context);
+          // Get context - handle both function and property access
+          const ctx = typeof sdk.context === "function" ? await sdk.context() : sdk.context;
+          console.log('🔍 Context result:', ctx);
           
-          // Try to access viewer data
-          if (context && context.viewer && context.viewer.pfpUrl) {
-            const pfpUrl = context.viewer.pfpUrl;
-            console.log('✅ Found PFP in context.viewer.pfpUrl:', pfpUrl);
-            userPfpUrl = pfpUrl;
-            return userPfpUrl;
+          // Get viewer - handle function proxy
+          const viewer = typeof ctx.viewer === "function" ? await ctx.viewer() : ctx.viewer;
+          console.log('🔍 Viewer result:', viewer);
+          
+          if (viewer) {
+            // Get pfpUrl - handle function proxy
+            let pfpUrl = viewer?.pfpUrl;
+            pfpUrl = typeof pfpUrl === "function" ? await pfpUrl() : pfpUrl;
+            console.log('🔍 PFP URL from viewer:', pfpUrl);
+            
+            if (pfpUrl && typeof pfpUrl === 'string') {
+              console.log('✅ Found PFP in context.viewer.pfpUrl:', pfpUrl);
+              userPfpUrl = pfpUrl;
+              return userPfpUrl;
+            }
+            
+            // Try alternative path: viewer.pfp.url
+            if (viewer?.pfp?.url) {
+              let pfpUrlAlt = viewer.pfp.url;
+              pfpUrlAlt = typeof pfpUrlAlt === "function" ? await pfpUrlAlt() : pfpUrlAlt;
+              console.log('🔍 PFP URL from viewer.pfp.url:', pfpUrlAlt);
+              
+              if (pfpUrlAlt && typeof pfpUrlAlt === 'string') {
+                console.log('✅ Found PFP in context.viewer.pfp.url:', pfpUrlAlt);
+                userPfpUrl = pfpUrlAlt;
+                return userPfpUrl;
+              }
+            }
           }
           
-          // Try alternative paths
-          if (context && context.user && context.user.pfpUrl) {
-            const pfpUrl = context.user.pfpUrl;
-            console.log('✅ Found PFP in context.user.pfpUrl:', pfpUrl);
-            userPfpUrl = pfpUrl;
-            return userPfpUrl;
-          }
+          // Try alternative path: context.user
+          const user = typeof ctx.user === "function" ? await ctx.user() : ctx.user;
+          console.log('🔍 User result:', user);
           
-          console.log('🔍 No PFP found in context, trying to call context...');
-          
-          // Try calling context as function
-          const contextResult = await sdk.context();
-          console.log('🔍 Context result:', contextResult);
-          
-          if (contextResult && contextResult.viewer && contextResult.viewer.pfpUrl) {
-            const pfpUrl = contextResult.viewer.pfpUrl;
-            console.log('✅ Found PFP in context().viewer.pfpUrl:', pfpUrl);
-            userPfpUrl = pfpUrl;
-            return userPfpUrl;
-          }
-          
-          if (contextResult && contextResult.user && contextResult.user.pfpUrl) {
-            const pfpUrl = contextResult.user.pfpUrl;
-            console.log('✅ Found PFP in context().user.pfpUrl:', pfpUrl);
-            userPfpUrl = pfpUrl;
-            return userPfpUrl;
+          if (user) {
+            let pfpUrl = user?.pfpUrl;
+            pfpUrl = typeof pfpUrl === "function" ? await pfpUrl() : pfpUrl;
+            console.log('🔍 PFP URL from user:', pfpUrl);
+            
+            if (pfpUrl && typeof pfpUrl === 'string') {
+              console.log('✅ Found PFP in context.user.pfpUrl:', pfpUrl);
+              userPfpUrl = pfpUrl;
+              return userPfpUrl;
+            }
           }
           
         } catch (contextError) {
