@@ -1620,6 +1620,17 @@
       resultContainer.style.display = 'none';
 
       try {
+        // Validate and fetch PFP URL for PFP mode BEFORE creating request body
+        if (isPfpMode && !userPfpUrl) {
+          console.log('🔍 PFP mode but no userPfpUrl, trying to fetch...');
+          const pfp = await getPfpUrl();
+          if (!pfp) {
+            console.log('❌ PFP generation failed: could not fetch PFP URL');
+            throw new Error('PFP URL not available. Please try again.');
+          }
+          userPfpUrl = pfp;
+        }
+
         // Use different endpoint for PFP mode
         const endpoint = isPfpMode ? '/api/degenify-pfp' : '/api/generate';
         const requestBody = isPfpMode ? {
@@ -1631,17 +1642,6 @@
           baseImage: currentBaseImage,
           promptContext: currentPromptContext
         };
-
-        // Validate PFP URL for PFP mode
-        if (isPfpMode && !userPfpUrl) {
-          console.log('🔍 PFP mode but no userPfpUrl, trying to fetch...');
-          const pfp = await getPfpUrl();
-          if (!pfp) {
-            console.log('❌ PFP generation failed: could not fetch PFP URL');
-            throw new Error('PFP URL not available. Please try again.');
-          }
-          userPfpUrl = pfp;
-        }
 
         // Ensure userPfpUrl is a valid string, not a Proxy function
         if (isPfpMode && userPfpUrl && typeof userPfpUrl !== 'string') {
