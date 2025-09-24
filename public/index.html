@@ -1414,7 +1414,7 @@
       }
     }
 
-    // Simple PFP fetching for miniapps using official SDK approach
+    // Simple PFP fetching for miniapps - avoid context access entirely
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
@@ -1425,46 +1425,22 @@
           return null;
         }
 
-        console.log('🔍 Getting PFP from miniapp context...');
+        console.log('🔍 Getting PFP using viewProfile with dummy FID...');
 
-        // Wait a bit for context to be fully populated
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        const context = sdk.context;
-        console.log('🔍 Raw context:', context);
-
-        // Extract user object from Proxy function
-        const user = await extractValue(context?.user);
-        console.log('🔍 Extracted user:', user);
-        
-        // Try to get pfpUrl from extracted user
-        if (user && user.pfpUrl) {
-          const pfpUrl = await extractValue(user.pfpUrl);
-          if (typeof pfpUrl === 'string' && pfpUrl.length > 0) {
-            userPfpUrl = pfpUrl;
-            console.log('✅ User PFP URL from direct access:', userPfpUrl);
-            return userPfpUrl;
-          }
-        }
-
-        // If direct access fails, try to get the current user's FID and use viewProfile
+        // Use a dummy FID to test if viewProfile works at all
+        // This avoids the problematic context.user access
         try {
-          console.log('🔍 Trying to get current user FID...');
-          const currentUserFid = await extractValue(user?.fid);
-          if (currentUserFid && typeof currentUserFid === 'number') {
-            console.log('🔍 Using current user FID:', currentUserFid);
-            const profile = await sdk.actions.viewProfile({ fid: currentUserFid });
-            if (profile && profile.user && profile.user.pfpUrl) {
-              userPfpUrl = profile.user.pfpUrl;
-              console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
-              return userPfpUrl;
-            }
+          const profile = await sdk.actions.viewProfile({ fid: 1 });
+          if (profile && profile.user && profile.user.pfpUrl) {
+            userPfpUrl = profile.user.pfpUrl;
+            console.log('✅ User PFP URL from viewProfile (dummy FID):', userPfpUrl);
+            return userPfpUrl;
           }
         } catch (viewError) {
           console.log('⚠️ viewProfile failed:', viewError);
         }
 
-        console.log('❌ No PFP found in miniapp context');
+        console.log('❌ No PFP found - viewProfile not working');
         return null;
       } catch (error) {
         console.log('❌ Error getting PFP:', error);
@@ -2118,10 +2094,10 @@ Create yours on www.degenify.xyz`;
       // Initial check
       updateButtonVisibility();
 
-      // MODERATE RETRIES: Check every 500ms for 5 seconds for SDK loading
+      // REDUCED RETRIES: Check every 1000ms for 3 seconds for SDK loading
       console.log('🔄 Setting up retry logic for SDK loading');
       let attempts = 0;
-      const maxAttempts = 10; // 5 seconds / 500ms
+      const maxAttempts = 3; // 3 seconds / 1000ms
       const retryInterval = setInterval(async () => {
         attempts++;
         console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
@@ -2132,7 +2108,7 @@ Create yours on www.degenify.xyz`;
           clearInterval(retryInterval);
           console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
         }
-      }, 500);
+      }, 1000);
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
