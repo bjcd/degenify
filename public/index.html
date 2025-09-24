@@ -219,10 +219,10 @@
       border-radius: 1rem;
       transition: var(--transition-smooth);
     }
-    
-    /* Hide toggle switch in miniapp, show only clickable squares */
+
+    /* Hide only the toggle switch in miniapp, keep the squares visible */
     @media (max-width: 768px) {
-      .mascot-toggle {
+      .toggle-switch {
         display: none;
       }
     }
@@ -1281,7 +1281,7 @@
       if (window.location !== window.parent.location) {
         return; // Skip in miniapp
       }
-      
+
       if (isMascotMode) {
         isMascotMode = false;
         isPfpMode = false;
