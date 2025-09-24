@@ -1618,7 +1618,7 @@
       generatorForm.style.display = 'none';
       loadingState.style.display = 'flex';
       resultContainer.style.display = 'none';
-      
+
       // Update loading message for PFP mode
       if (isPfpMode) {
         loadingState.innerHTML = '<div class="loading-spinner"></div><p>Degenifying your PFP... This may take a moment</p>';
@@ -1663,10 +1663,10 @@
         let response;
         let lastError;
         const maxRetries = isPfpMode ? 3 : 1; // Only retry for PFP mode
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           console.log(`🔍 Attempt ${attempt}/${maxRetries} for ${isPfpMode ? 'PFP' : 'regular'} generation`);
-          
+
           response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1674,27 +1674,27 @@
           });
 
           console.log(`🔍 Response status (attempt ${attempt}):`, response.status);
-          
+
           if (response.ok) {
             console.log(`✅ Generation successful on attempt ${attempt}`);
             break; // Success, exit retry loop
           }
-          
+
           // Log error details
           const errorText = await response.text();
           console.log(`❌ Server error response (attempt ${attempt}):`, errorText);
           lastError = errorText;
-          
+
           // If this is not the last attempt, wait before retrying
           if (attempt < maxRetries) {
-            console.log(`⏳ Waiting 2 seconds before retry ${attempt + 1}...`);
+            console.log(`⏳ Waiting 1 second before retry ${attempt + 1}...`);
             
             // Update loading message to show retry
             if (isPfpMode) {
               loadingState.innerHTML = `<div class="loading-spinner"></div><p>Retrying PFP generation... Attempt ${attempt + 1}/${maxRetries}</p>`;
             }
             
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced from 2s to 1s
           }
         }
 
