@@ -257,9 +257,11 @@ Situation to create: ${prompt}`;
         }
 
         const aiData = await aiRes.json();
+        console.log('🔍 AI Response structure:', JSON.stringify(aiData, null, 2));
+
         if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts || !aiData.candidates[0].content.parts[0] || !aiData.candidates[0].content.parts[0].inlineData) {
             console.error('Unexpected AI response structure:', JSON.stringify(aiData, null, 2));
-            return res.status(500).json({ error: 'Unexpected AI response structure' });
+            return res.status(500).json({ error: 'Unexpected AI response structure', details: 'Check server logs for full response' });
         }
 
         const imgBase64 = aiData.candidates[0].content.parts[0].inlineData.data;
