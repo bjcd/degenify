@@ -286,6 +286,115 @@
       object-fit: cover;
     }
 
+    /* Mobile-specific fixes for mascot toggle - more subtle */
+    @media (max-width: 768px) {
+      .mascot-toggle {
+        flex-direction: row;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        background: hsl(var(--card) / 0.4);
+        border: 1px solid hsl(var(--border) / 0.2);
+      }
+
+      .mascot-option {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        border-radius: 0.4rem;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        background: transparent;
+        border: 1px solid transparent;
+        transition: var(--transition-smooth);
+        opacity: 0.7;
+      }
+
+      .mascot-option.active {
+        background: hsl(var(--primary) / 0.15);
+        border-color: hsl(var(--primary) / 0.3);
+        opacity: 1;
+        font-weight: 600;
+      }
+
+      .mascot-option:active {
+        transform: scale(0.96);
+      }
+
+      .toggle-switch {
+        width: 50px;
+        height: 28px;
+        border-radius: 14px;
+        margin: 0;
+        padding: 2px;
+        flex-shrink: 0;
+      }
+
+      .toggle-slider {
+        width: 20px;
+        height: 20px;
+        top: 2px;
+        left: 2px;
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(22px);
+      }
+
+      .mascot-icon {
+        width: 16px;
+        height: 16px;
+        margin-right: 0.3rem;
+      }
+
+      /* Ensure proper touch handling */
+      .toggle-switch,
+      .mascot-option {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+    }
+
+    /* Very small screens - even more compact */
+    @media (max-width: 480px) {
+      .mascot-toggle {
+        padding: 0.6rem;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .mascot-option {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.5rem;
+        min-height: 32px;
+      }
+
+      .toggle-switch {
+        width: 45px;
+        height: 26px;
+        border-radius: 13px;
+      }
+
+      .toggle-slider {
+        width: 18px;
+        height: 18px;
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(19px);
+      }
+
+      .mascot-icon {
+        width: 14px;
+        height: 14px;
+        margin-right: 0.25rem;
+      }
+    }
+
     /* Enhanced input styles */
     .input-degenify {
       width: 100%;
@@ -961,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1145,6 +1254,21 @@
     mascotToggle.addEventListener('click', () => {
       isMascotMode = !isMascotMode;
       updateToggleState();
+    });
+
+    // Mobile-friendly option click handlers
+    mascotOption.addEventListener('click', () => {
+      if (!isMascotMode) {
+        isMascotMode = true;
+        updateToggleState();
+      }
+    });
+
+    cyberpunkOption.addEventListener('click', () => {
+      if (isMascotMode) {
+        isMascotMode = false;
+        updateToggleState();
+      }
     });
 
     // Initialize toggle state
