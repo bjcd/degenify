@@ -1319,16 +1319,53 @@
     // Initialize toggle state
     updateToggleState();
 
-    // Show/hide PFP option based on miniapp context - use same logic as Add to Home Screen button
+    // Show/hide PFP option based on miniapp context - use official SDK methods
     async function updatePfpVisibility() {
       try {
-        const context = await window.detectFarcasterContext();
-        console.log('🔍 PFP context check:', context);
+        // Use official Farcaster SDK methods (same as share and button detection)
+        let isInMiniApp = false;
+        let platform = 'web';
+        let client = null;
+
+        if (window.farcaster && window.farcaster.isInMiniApp) {
+          try {
+            isInMiniApp = await window.farcaster.isInMiniApp();
+            console.log('🔍 SDK isInMiniApp():', isInMiniApp);
+          } catch (error) {
+            console.log('❌ isInMiniApp() failed:', error);
+          }
+        }
+
+        if (window.farcaster && window.farcaster.context) {
+          try {
+            const ctx = await window.farcaster.context();
+            platform = ctx.platform || 'web';
+            client = ctx.client?.id || null;
+            console.log('🔍 SDK context():', { platform, client });
+          } catch (error) {
+            console.log('❌ context() failed:', error);
+          }
+        }
+
+        // Determine environment using official SDK methods
+        const isFarcasterMiniapp = isInMiniApp;
+        const isMiniappMobile = isInMiniApp && platform === 'mobile';
+        const isMiniappDesktop = isInMiniApp && platform === 'web';
+        const isWebsite = !isInMiniApp;
+
+        console.log('🔍 PFP OFFICIAL SDK DETECTION:');
+        console.log('- isInMiniApp:', isInMiniApp);
+        console.log('- platform:', platform);
+        console.log('- client:', client);
+        console.log('- isFarcasterMiniapp:', isFarcasterMiniapp);
+        console.log('- isMiniappMobile:', isMiniappMobile);
+        console.log('- isMiniappDesktop:', isMiniappDesktop);
+        console.log('- isWebsite:', isWebsite);
         
-        // Use exact same logic as Add to Home Screen button
-        if (context.isFarcasterMiniapp && context.shouldShowButton) {
+        // Show PFP option only in miniapp context (same as Add to Home Screen button)
+        if (isFarcasterMiniapp) {
           pfpOption.style.display = 'flex';
-          console.log('✅ PFP option shown - in miniapp context with proper SDK');
+          console.log('✅ PFP option shown - in miniapp context with official SDK');
         } else {
           pfpOption.style.display = 'none';
           // If currently in PFP mode, switch back to mascot mode
@@ -1337,7 +1374,7 @@
             isPfpMode = false;
             updateToggleState();
           }
-          console.log('❌ PFP option hidden - not in miniapp context or SDK not ready');
+          console.log('❌ PFP option hidden - not in miniapp context');
         }
       } catch (error) {
         console.log('❌ Error checking miniapp context:', error);
@@ -1378,21 +1415,35 @@
       }
     }
 
-    // Try to fetch user PFP when in miniapp context - use same logic as Add to Home Screen button
+    // Try to fetch user PFP when in miniapp context - use official SDK methods
     async function initializeUserPfp() {
-      const context = await window.detectFarcasterContext();
-      if (context.isFarcasterMiniapp && context.shouldShowButton) {
-        const pfp = await fetchUserPfp();
-        if (!pfp) {
-          console.log('❌ Could not fetch user PFP from Farcaster SDK');
-          // Disable PFP option if no PFP found
-          pfpOption.style.display = 'none';
-          pfpOption.style.opacity = '0.5';
-          pfpOption.title = 'PFP not available - could not fetch from Farcaster';
-        } else {
-          pfpOption.style.opacity = '1';
-          pfpOption.title = 'Degenify your profile picture';
+      try {
+        // Use official Farcaster SDK methods (same as share and button detection)
+        let isInMiniApp = false;
+
+        if (window.farcaster && window.farcaster.isInMiniApp) {
+          try {
+            isInMiniApp = await window.farcaster.isInMiniApp();
+          } catch (error) {
+            console.log('❌ isInMiniApp() failed in initializeUserPfp:', error);
+          }
         }
+
+        if (isInMiniApp) {
+          const pfp = await fetchUserPfp();
+          if (!pfp) {
+            console.log('❌ Could not fetch user PFP from Farcaster SDK');
+            // Disable PFP option if no PFP found
+            pfpOption.style.display = 'none';
+            pfpOption.style.opacity = '0.5';
+            pfpOption.title = 'PFP not available - could not fetch from Farcaster';
+          } else {
+            pfpOption.style.opacity = '1';
+            pfpOption.title = 'Degenify your profile picture';
+          }
+        }
+      } catch (error) {
+        console.log('❌ Error in initializeUserPfp:', error);
       }
     }
 
