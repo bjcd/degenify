@@ -277,12 +277,24 @@ Situation to create: ${prompt}`;
         const aiData = await aiRes.json();
         console.log('🔍 AI Response structure:', JSON.stringify(aiData, null, 2));
 
-        if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts || !aiData.candidates[0].content.parts[0] || !aiData.candidates[0].content.parts[0].inlineData) {
+        if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts) {
             console.error('Unexpected AI response structure:', JSON.stringify(aiData, null, 2));
             return res.status(500).json({ error: 'Unexpected AI response structure', details: 'Check server logs for full response' });
         }
 
-        const imgBase64 = aiData.candidates[0].content.parts[0].inlineData.data;
+        // Find the part with inlineData (image) - it might not be the first part
+        let imgBase64 = null;
+        for (const part of aiData.candidates[0].content.parts) {
+            if (part.inlineData && part.inlineData.data) {
+                imgBase64 = part.inlineData.data;
+                break;
+            }
+        }
+
+        if (!imgBase64) {
+            console.error('No image data found in AI response:', JSON.stringify(aiData, null, 2));
+            return res.status(500).json({ error: 'No image data found in AI response', details: 'Check server logs for full response' });
+        }
         const imgBuffer = Buffer.from(imgBase64, 'base64');
 
         // Upload to Cloudinary
