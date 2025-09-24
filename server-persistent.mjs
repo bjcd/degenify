@@ -193,21 +193,36 @@ Situation to create: ${prompt}`;
 // API endpoint to degenify user's PFP
 app.post('/api/degenify-pfp', async (req, res) => {
     try {
+        console.log('🔍 PFP degenify request received');
+        console.log('🔍 Request body:', JSON.stringify(req.body, null, 2));
+        
         const { prompt, pfpUrl, promptContext } = req.body || {};
-        if (!prompt) return res.status(400).json({ error: 'prompt required' });
-        if (!pfpUrl) return res.status(400).json({ error: 'pfpUrl required' });
+        
+        if (!prompt) {
+            console.log('❌ Missing prompt');
+            return res.status(400).json({ error: 'prompt required' });
+        }
+        if (!pfpUrl) {
+            console.log('❌ Missing pfpUrl');
+            return res.status(400).json({ error: 'pfpUrl required' });
+        }
+        
+        console.log('✅ PFP degenify request valid:', { prompt: prompt.substring(0, 50) + '...', pfpUrl, promptContext: promptContext?.substring(0, 50) + '...' });
 
         if (!GOOGLE_API_KEY) {
             return res.status(500).json({ error: 'Google API key not configured' });
         }
 
         // Fetch the user's PFP image
+        console.log('🔍 Fetching PFP image from:', pfpUrl);
         const pfpResponse = await fetch(pfpUrl);
         if (!pfpResponse.ok) {
+            console.log('❌ Failed to fetch PFP image:', pfpResponse.status, pfpResponse.statusText);
             return res.status(400).json({ error: 'Failed to fetch PFP image' });
         }
         const pfpBuffer = await pfpResponse.arrayBuffer();
         const pfpBase64 = Buffer.from(pfpBuffer).toString('base64');
+        console.log('✅ PFP image fetched and encoded, size:', pfpBase64.length);
 
         // Determine MIME type based on URL or response headers
         const contentType = pfpResponse.headers.get('content-type') || 'image/jpeg';
@@ -244,6 +259,7 @@ Situation to create: ${prompt}`;
             ],
         };
 
+        console.log('🔍 Sending request to Google AI API...');
         const aiRes = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GOOGLE_API_KEY },
@@ -252,9 +268,11 @@ Situation to create: ${prompt}`;
 
         if (!aiRes.ok) {
             const errorText = await aiRes.text();
-            console.error('Google API error:', errorText);
+            console.error('❌ Google API error:', aiRes.status, errorText);
             return res.status(500).json({ error: 'Google API error', details: errorText });
         }
+        
+        console.log('✅ Google AI API request successful');
 
         const aiData = await aiRes.json();
         console.log('🔍 AI Response structure:', JSON.stringify(aiData, null, 2));
