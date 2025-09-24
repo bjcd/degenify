@@ -1756,10 +1756,13 @@
         console.log('🔍 SDK wallet methods:', sdk.wallet);
         console.log('🔍 SDK experimental methods:', sdk.experimental);
 
+        console.log('🔍 Calling signIn...');
         const signInResult = await sdk.actions.signIn({
-          nonce: `degenify-payment-${Date.now()}`,
+          nonce: `degenifypayment${Date.now()}`,
           acceptAuthAddress: true
         });
+
+        console.log('🔍 SignIn result:', signInResult);
 
         if (!signInResult || !signInResult.message) {
           throw new Error('Failed to get wallet address');
@@ -1786,13 +1789,14 @@
           recipientAddress: TREASURY_ADDRESS
         });
 
+        console.log('🔍 About to call sdk.actions.sendToken...');
         try {
           const paymentResult = await sdk.actions.sendToken({
             token: DEGEN_CONTRACT,
             amount: DEGEN_AMOUNT,
             recipientAddress: TREASURY_ADDRESS
           });
-          
+
           console.log('✅ Payment dialog opened successfully:', paymentResult);
         } catch (sendTokenError) {
           console.error('❌ sendToken failed:', sendTokenError);
