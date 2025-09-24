@@ -1650,6 +1650,9 @@
         }
 
         console.log('🔍 Generation request:', { endpoint, isPfpMode, userPfpUrl: isPfpMode ? userPfpUrl : 'N/A' });
+        console.log('🔍 Request body:', requestBody);
+        console.log('🔍 Prompt value:', prompt);
+        console.log('🔍 Prompt context:', currentPromptContext);
 
         const response = await fetch(endpoint, {
           method: 'POST',
