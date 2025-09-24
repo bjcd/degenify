@@ -348,6 +348,44 @@ app.post('/api/get-user-pfp', async (req, res) => {
     }
 });
 
+// API endpoint to get PFP URL from FID (simplified version for miniapp)
+app.post('/api/fc-pfp', async (req, res) => {
+    try {
+        const { fid } = req.body;
+        if (!fid) {
+            return res.status(400).json({ error: 'Missing fid' });
+        }
+
+        console.log(`🔍 Fetching PFP for FID: ${fid}`);
+
+        // Use Neynar API to get user data by FID
+        const neynarResponse = await fetch(`https://api.neynar.com/v2/farcaster/user?fid=${fid}`, {
+            headers: {
+                'api_key': process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS'
+            }
+        });
+
+        if (!neynarResponse.ok) {
+            console.error('Neynar API error:', neynarResponse.status, neynarResponse.statusText);
+            return res.status(502).json({ error: 'Failed to fetch user data from Neynar' });
+        }
+
+        const userData = await neynarResponse.json();
+        const pfpUrl = userData.result?.user?.pfp_url || userData.result?.user?.pfp?.url || null;
+
+        if (!pfpUrl) {
+            console.log(`No PFP found for FID: ${fid}`);
+            return res.status(404).json({ error: 'No PFP found for this user' });
+        }
+
+        console.log(`✅ Found PFP for FID ${fid}: ${pfpUrl}`);
+        res.json({ pfpUrl });
+    } catch (err) {
+        console.error('PFP fetch error:', err);
+        res.status(500).json({ error: err.message || 'Server error' });
+    }
+});
+
 // API endpoint to serve image directly (for social media previews)
 app.get('/api/image/:id', async (req, res) => {
     try {
