@@ -1385,36 +1385,37 @@
     // Check PFP visibility on page load and when SDK loads
     console.log('🔍 Initial PFP visibility check...');
     updatePfpVisibility();
-    
-    // TEMPORARY DEBUG: Force show PFP option for testing
-    setTimeout(() => {
-      console.log('🔍 DEBUG: Forcing PFP option to be visible for testing...');
-      pfpOption.style.display = 'flex';
-      pfpOption.style.opacity = '1';
-    }, 2000);
 
-    // Fetch user's PFP from Farcaster SDK
+    // Fetch user's PFP from Farcaster SDK using viewProfile action
     async function fetchUserPfp() {
       try {
-        if (window.farcaster && window.farcaster.context) {
+        if (window.farcaster && window.farcaster.context && window.farcaster.actions && window.farcaster.actions.viewProfile) {
+          // First get the user's FID from context
           const context = await window.farcaster.context();
           console.log('🔍 Farcaster context:', context);
-
-          // Check if user data is available in context
-          if (context.user && context.user.pfp) {
-            userPfpUrl = context.user.pfp;
-            console.log('✅ User PFP found:', userPfpUrl);
-            return userPfpUrl;
-          } else if (context.user && context.user.pfpUrl) {
-            userPfpUrl = context.user.pfpUrl;
-            console.log('✅ User PFP URL found:', userPfpUrl);
-            return userPfpUrl;
+          
+          if (context.user && context.user.fid) {
+            const fid = context.user.fid;
+            console.log('🔍 User FID:', fid);
+            
+            // Use viewProfile action to get the full profile including pfpUrl
+            const profile = await window.farcaster.actions.viewProfile({ fid });
+            console.log('🔍 User profile:', profile);
+            
+            if (profile && profile.user && profile.user.pfpUrl) {
+              userPfpUrl = profile.user.pfpUrl;
+              console.log('✅ User PFP URL:', userPfpUrl);
+              return userPfpUrl;
+            } else {
+              console.log('❌ No pfpUrl found in profile');
+              return null;
+            }
           } else {
-            console.log('❌ No PFP found in user context');
+            console.log('❌ No user FID found in context');
             return null;
           }
         } else {
-          console.log('❌ Farcaster SDK not available');
+          console.log('❌ Farcaster SDK or viewProfile action not available');
           return null;
         }
       } catch (error) {
