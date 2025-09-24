@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1414,7 +1414,7 @@
       }
     }
 
-    // Simple PFP fetching for miniapps - avoid context access entirely
+    // PFP fetching for miniapps - get actual user's PFP via server
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
@@ -1425,22 +1425,52 @@
           return null;
         }
 
-        console.log('🔍 Getting PFP using viewProfile with dummy FID...');
+        console.log('🔍 Getting user FID from miniapp context...');
 
-        // Use a dummy FID to test if viewProfile works at all
-        // This avoids the problematic context.user access
+        // Try to get FID from miniapp context (this should work without APPLY errors)
+        let userFid = null;
         try {
-          const profile = await sdk.actions.viewProfile({ fid: 1 });
-          if (profile && profile.user && profile.user.pfpUrl) {
-            userPfpUrl = profile.user.pfpUrl;
-            console.log('✅ User PFP URL from viewProfile (dummy FID):', userPfpUrl);
-            return userPfpUrl;
+          // Try to access context properties safely
+          const context = sdk.context;
+          if (context && typeof context === 'object') {
+            // Try different ways to access the user FID
+            if (context.user && context.user.fid) {
+              userFid = context.user.fid;
+            } else if (context.fid) {
+              userFid = context.fid;
+            }
           }
-        } catch (viewError) {
-          console.log('⚠️ viewProfile failed:', viewError);
+        } catch (contextError) {
+          console.log('⚠️ Context access failed:', contextError);
         }
 
-        console.log('❌ No PFP found - viewProfile not working');
+        if (userFid) {
+          console.log('🔍 Got user FID from context:', userFid);
+          
+          // Send FID to our server to fetch PFP (server-side API call)
+          try {
+            const response = await fetch('/api/get-user-pfp', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ fid: userFid })
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.pfpUrl) {
+                userPfpUrl = data.pfpUrl;
+                console.log('✅ User PFP URL from server:', userPfpUrl);
+                return userPfpUrl;
+              }
+            }
+          } catch (serverError) {
+            console.log('⚠️ Server PFP fetch failed:', serverError);
+          }
+        }
+
+        console.log('❌ No PFP found - could not get user FID or fetch PFP');
         return null;
       } catch (error) {
         console.log('❌ Error getting PFP:', error);
