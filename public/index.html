@@ -1397,11 +1397,11 @@
       }
     }
 
-    // Simple PFP fetching for miniapps
+    // Simple PFP fetching for miniapps using official SDK approach
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
-
+        
         // Check if we're in a miniapp
         if (!(await sdk.isInMiniApp())) {
           console.log('❌ Not in miniapp context');
@@ -1410,28 +1410,35 @@
 
         console.log('🔍 Getting PFP from miniapp context...');
 
-        // In miniapps, the user PFP should be directly available
-        // Handle Proxy functions properly
+        // According to Farcaster SDK docs, context should be accessed directly
+        // Wait a bit for context to be fully populated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const context = sdk.context;
         console.log('🔍 Raw context:', context);
-
-        // Try to get user PFP with safe access
-        const userPfp = safeGet(context, 'user.pfpUrl');
-        if (userPfp && typeof userPfp === 'string') {
-          userPfpUrl = userPfp;
-          console.log('✅ User PFP URL from safe access:', userPfpUrl);
-          return userPfpUrl;
+        
+        // Try direct access to user.pfpUrl as per SDK docs
+        if (context && context.user && context.user.pfpUrl) {
+          const pfpUrl = context.user.pfpUrl;
+          if (typeof pfpUrl === 'string' && pfpUrl.length > 0) {
+            userPfpUrl = pfpUrl;
+            console.log('✅ User PFP URL from direct access:', userPfpUrl);
+            return userPfpUrl;
+          }
         }
 
-        // If direct access fails, try the viewProfile action
+        // If direct access fails, try to get the current user's FID and use viewProfile
         try {
-          console.log('🔍 Trying viewProfile action...');
-          const profile = await sdk.actions.viewProfile({ fid: 1 }); // Use a dummy FID first
-          const profilePfp = safeGet(profile, 'user.pfpUrl');
-          if (profilePfp && typeof profilePfp === 'string') {
-            userPfpUrl = profilePfp;
-            console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
-            return userPfpUrl;
+          console.log('🔍 Trying to get current user FID...');
+          const currentUserFid = context?.user?.fid;
+          if (currentUserFid) {
+            console.log('🔍 Using current user FID:', currentUserFid);
+            const profile = await sdk.actions.viewProfile({ fid: currentUserFid });
+            if (profile && profile.user && profile.user.pfpUrl) {
+              userPfpUrl = profile.user.pfpUrl;
+              console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
+              return userPfpUrl;
+            }
           }
         } catch (viewError) {
           console.log('⚠️ viewProfile failed:', viewError);
