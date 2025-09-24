@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1619,9 +1619,12 @@
       loadingState.style.display = 'flex';
       resultContainer.style.display = 'none';
 
-      // Update loading message for PFP mode
+      // Update loading message with rotating hat for all modes
       if (isPfpMode) {
         loadingState.innerHTML = '<div class="loading-spinner rotating-hat"></div><p>Degenifying your PFP... This may take a moment</p>';
+      } else {
+        // For Mascot and Cyberpunk modes, also show rotating hat
+        loadingState.innerHTML = '<div class="loading-spinner rotating-hat"></div><p>Degenifying your situation... This may take a moment</p>';
       }
 
       try {
