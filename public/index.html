@@ -1442,7 +1442,7 @@
           console.log('🔍 Generated nonce:', nonce);
 
           // Call signIn() with nonce and acceptAuthAddress - this should launch native Farcaster wallet interface
-          const result = await sdk.actions.signIn({ 
+          const result = await sdk.actions.signIn({
             nonce,
             acceptAuthAddress: true
           });
@@ -1451,26 +1451,35 @@
           // The result should contain the SIWF message and signature
           if (result && result.message) {
             console.log('✅ SignIn successful, got message:', result.message);
-
-            // Extract user data from the message
+            
+            // Extract FID from the message - it's in the Resources section
             const message = result.message;
-            if (message.data && message.data.fid) {
+            console.log('🔍 Full message:', message);
+            
+            // Look for FID in the message content (format: farcaster://fid/17064)
+            const fidMatch = message.match(/farcaster:\/\/fid\/(\d+)/);
+            if (fidMatch) {
+              const fid = parseInt(fidMatch[1]);
+              console.log('🔍 Extracted FID:', fid);
+              
               // Get user profile using the FID from the signed message
-              const profile = await sdk.actions.viewProfile({ fid: message.data.fid });
+              const profile = await sdk.actions.viewProfile({ fid });
               console.log('🔍 Profile from FID:', profile);
               viewer = profile?.user;
+            } else {
+              console.log('⚠️ Could not extract FID from message');
             }
           }
 
         } catch (e) {
           console.log("⚠️ SignIn failed:", e);
-          
+
           // Handle specific error types
           if (e.name === 'RejectedByUser') {
             console.log("❌ User rejected the sign-in request");
             return null; // User cancelled, don't try fallbacks
           }
-          
+
           // If signIn fails for other reasons, try fallback approaches
           try {
             console.log('🔍 Trying fallback: direct context access...');
