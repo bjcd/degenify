@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1432,31 +1432,46 @@
           await sdk.actions.ready();
         }
 
-        // Try to access viewer data without signIn() since it crashes
+        // Use proper Farcaster signIn() with nonce for native wallet interface
         let viewer;
         try {
-          console.log('🔍 Trying to access viewer data without signIn()...');
+          console.log('🔍 Calling native Farcaster signIn() with nonce...');
           
-          // Try direct context access first
-          const context = sdk.context;
-          console.log('🔍 Raw context:', context);
+          // Generate a simple nonce (in production, this should come from your server)
+          const nonce = `degenify-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          console.log('🔍 Generated nonce:', nonce);
           
-          if (context && typeof context === 'object') {
-            viewer = context.viewer || context.user;
-            console.log('🔍 Viewer from context:', viewer);
-          }
+          // Call signIn() with nonce - this should launch native Farcaster wallet interface
+          const result = await sdk.actions.signIn({ nonce });
+          console.log('🔍 SignIn result:', result);
           
-          // If no viewer from context, try viewProfile with dummy FID
-          if (!viewer) {
-            console.log('🔍 Trying viewProfile with dummy FID...');
-            const profile = await sdk.actions.viewProfile({ fid: 1 });
-            console.log('🔍 Profile result:', profile);
-            viewer = profile?.user;
+          // The result should contain the SIWF message and signature
+          if (result && result.message) {
+            console.log('✅ SignIn successful, got message:', result.message);
+            
+            // Extract user data from the message
+            const message = result.message;
+            if (message.data && message.data.fid) {
+              // Get user profile using the FID from the signed message
+              const profile = await sdk.actions.viewProfile({ fid: message.data.fid });
+              console.log('🔍 Profile from FID:', profile);
+              viewer = profile?.user;
+            }
           }
           
         } catch (e) {
-          console.log("⚠️ Viewer access failed:", e);
-          // Fall back to placeholder
+          console.log("⚠️ SignIn failed:", e);
+          // If signIn fails, try fallback approaches
+          try {
+            console.log('🔍 Trying fallback: direct context access...');
+            const context = sdk.context;
+            if (context && typeof context === 'object') {
+              viewer = context.viewer || context.user;
+              console.log('🔍 Viewer from context fallback:', viewer);
+            }
+          } catch (contextError) {
+            console.log("⚠️ Context fallback also failed:", contextError);
+          }
         }
 
         if (viewer) {
