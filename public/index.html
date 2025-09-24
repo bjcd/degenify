@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1375,19 +1375,35 @@
     // Check PFP visibility on page load and when SDK loads
     console.log('🔍 Initial PFP visibility check...');
     updatePfpVisibility();
-    
+
     // TEMPORARY DEBUG: Force show PFP option and check SDK status
-    setTimeout(() => {
+    setTimeout(async () => {
       console.log('🔍 DEBUG: Checking SDK status...');
       console.log('window.farcaster exists:', !!window.farcaster);
       console.log('window.farcaster.isInMiniApp exists:', !!(window.farcaster && window.farcaster.isInMiniApp));
       console.log('window.farcaster.context exists:', !!(window.farcaster && window.farcaster.context));
       
-      // Force show PFP option for testing
-      console.log('🔍 DEBUG: Forcing PFP option to be visible...');
-      pfpOption.style.display = 'flex';
-      pfpOption.style.opacity = '1';
-      pfpOption.style.backgroundColor = 'red'; // Make it obvious
+      // Check if we're actually in a miniapp
+      let isInMiniApp = false;
+      if (window.farcaster && window.farcaster.isInMiniApp) {
+        try {
+          isInMiniApp = await window.farcaster.isInMiniApp();
+          console.log('🔍 DEBUG: isInMiniApp result:', isInMiniApp);
+        } catch (error) {
+          console.log('❌ DEBUG: isInMiniApp failed:', error);
+        }
+      }
+      
+      // Only force show PFP option if we're in a miniapp
+      if (isInMiniApp) {
+        console.log('🔍 DEBUG: In miniapp - forcing PFP option to be visible...');
+        pfpOption.style.display = 'flex';
+        pfpOption.style.opacity = '1';
+        pfpOption.style.backgroundColor = 'red'; // Make it obvious
+      } else {
+        console.log('🔍 DEBUG: Not in miniapp - PFP option should be hidden');
+        pfpOption.style.display = 'none';
+      }
     }, 3000);
 
     // Fetch user's PFP from Farcaster SDK using viewProfile action
@@ -1468,7 +1484,11 @@
     if (originalUpdateButtonVisibility) {
       window.updateButtonVisibility = async () => {
         await originalUpdateButtonVisibility();
-        await updatePfpVisibility();
+        try {
+          await updatePfpVisibility();
+        } catch (error) {
+          console.log('❌ Error in updatePfpVisibility from retry:', error);
+        }
       };
     }
 
@@ -1503,18 +1523,23 @@
       loadingState.style.display = 'flex';
       resultContainer.style.display = 'none';
 
-      try {
-        // Use different endpoint for PFP mode
-        const endpoint = isPfpMode ? '/api/degenify-pfp' : '/api/generate';
-        const requestBody = isPfpMode ? {
-          prompt,
-          pfpUrl: userPfpUrl,
-          promptContext: currentPromptContext
-        } : {
-          prompt,
-          baseImage: currentBaseImage,
-          promptContext: currentPromptContext
-        };
+        try {
+          // Use different endpoint for PFP mode
+          const endpoint = isPfpMode ? '/api/degenify-pfp' : '/api/generate';
+          const requestBody = isPfpMode ? {
+            prompt,
+            pfpUrl: userPfpUrl,
+            promptContext: currentPromptContext
+          } : {
+            prompt,
+            baseImage: currentBaseImage,
+            promptContext: currentPromptContext
+          };
+
+          // Validate PFP URL for PFP mode
+          if (isPfpMode && !userPfpUrl) {
+            throw new Error('PFP URL not available. Please try again.');
+          }
 
         const response = await fetch(endpoint, {
           method: 'POST',
