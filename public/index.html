@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1787,12 +1787,12 @@
         });
 
         try {
-          const paymentResult = await sdk.sendToken({
+          const paymentResult = await sdk.actions.sendToken({
             token: DEGEN_CONTRACT,
             amount: DEGEN_AMOUNT,
             recipientAddress: TREASURY_ADDRESS
           });
-
+          
           console.log('✅ Payment dialog opened successfully:', paymentResult);
         } catch (sendTokenError) {
           console.error('❌ sendToken failed:', sendTokenError);
