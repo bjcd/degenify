@@ -1435,13 +1435,13 @@
           const context = sdk.context;
           console.log('🔍 Context object:', context);
           console.log('🔍 Context type:', typeof context);
-          
+
           // Try to access user data from context
           if (context && typeof context === 'object') {
             console.log('🔍 Context keys:', Object.keys(context));
             console.log('🔍 Checking context.user:', context.user);
             console.log('🔍 Checking context.fid:', context.fid);
-            
+
             // Try to get FID from user object
             if (context.user && context.user.fid) {
               userFid = context.user.fid;
@@ -1488,29 +1488,29 @@
           console.log('🔍 Trying alternative approach - checking for user data in different ways...');
           
           try {
-            // Method 1: Try signIn to get user data
-            console.log('🔍 Trying signIn to get user data...');
+            // Method 1: Try to access context as a function (since it's a Proxy(Function))
+            console.log('🔍 Trying to call context as function...');
             try {
-              const signInResult = await sdk.actions.signIn();
-              console.log('🔍 SignIn result:', signInResult);
+              const contextResult = await sdk.context();
+              console.log('🔍 Context function result:', contextResult);
               
-              // After signIn, try to access context again
-              const contextAfterSignIn = sdk.context;
-              console.log('🔍 Context after signIn:', contextAfterSignIn);
-              
-              if (contextAfterSignIn && contextAfterSignIn.user && contextAfterSignIn.user.fid) {
-                userFid = contextAfterSignIn.user.fid;
-                console.log('🔍 Found FID after signIn:', userFid);
+              if (contextResult && contextResult.user && contextResult.user.fid) {
+                userFid = contextResult.user.fid;
+                console.log('🔍 Found FID from context function:', userFid);
               }
-            } catch (signInError) {
-              console.log('⚠️ SignIn failed:', signInError);
+            } catch (contextCallError) {
+              console.log('⚠️ Context function call failed:', contextCallError);
             }
             
             // Method 2: Try to get user data via viewProfile with a known working FID
             if (!userFid) {
               console.log('🔍 Testing viewProfile with FID 1 to see if it works...');
-              const testProfile = await sdk.actions.viewProfile({ fid: 1 });
-              console.log('🔍 Test profile result:', testProfile);
+              try {
+                const testProfile = await sdk.actions.viewProfile({ fid: 1 });
+                console.log('🔍 Test profile result:', testProfile);
+              } catch (viewProfileError) {
+                console.log('⚠️ ViewProfile failed:', viewProfileError);
+              }
             }
             
             // Method 3: Try to access context properties more deeply
@@ -1526,6 +1526,39 @@
                 for (const key in context) {
                   console.log(`🔍 Context.${key}:`, context[key]);
                 }
+              }
+            }
+            
+            // Method 4: Try to get user data from URL parameters or other sources
+            if (!userFid) {
+              console.log('🔍 Trying to get FID from URL parameters...');
+              try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const fidFromUrl = urlParams.get('fid');
+                if (fidFromUrl) {
+                  userFid = parseInt(fidFromUrl);
+                  console.log('🔍 Found FID from URL:', userFid);
+                }
+              } catch (urlError) {
+                console.log('⚠️ URL parameter check failed:', urlError);
+              }
+            }
+            
+            // Method 5: Try to get user data from referrer or other sources
+            if (!userFid) {
+              console.log('🔍 Trying to get FID from referrer...');
+              try {
+                const referrer = document.referrer;
+                console.log('🔍 Referrer:', referrer);
+                
+                // Check if referrer contains FID information
+                const fidMatch = referrer.match(/fid=(\d+)/);
+                if (fidMatch) {
+                  userFid = parseInt(fidMatch[1]);
+                  console.log('🔍 Found FID from referrer:', userFid);
+                }
+              } catch (referrerError) {
+                console.log('⚠️ Referrer check failed:', referrerError);
               }
             }
             
