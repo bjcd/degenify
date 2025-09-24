@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1107,7 +1107,9 @@
                     <span>Cyberpunk</span>
                   </div>
                   <div class="mascot-option" id="pfp-option" style="display: none;">
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM4QjNCRUQiLz4KPHBhdGggZD0iTTEyIDJMMTQuNSA5SDE5LjVMMTUuNzUgMTMuNUwxNy41IDE5TDEyIDE2TDUuNSAxOUw3LjI1IDEzLjVMMi41IDlINy41TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="PFP" class="mascot-icon">
+                    <img
+                      src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM4QjNCRUQiLz4KPHBhdGggZD0iTTEyIDJMMTQuNSA5SDE5LjVMMTUuNzUgMTMuNUwxNy41IDE5TDEyIDE2TDUuNSAxOUw3LjI1IDEzLjVMMi41IDlINy41TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K"
+                      alt="PFP" class="mascot-icon">
                     <span>My PFP</span>
                   </div>
                 </div>
@@ -1349,7 +1351,7 @@
         if (window.farcaster && window.farcaster.context) {
           const context = await window.farcaster.context();
           console.log('🔍 Farcaster context:', context);
-          
+
           // Check if user data is available in context
           if (context.user && context.user.pfp) {
             userPfpUrl = context.user.pfp;
@@ -1377,7 +1379,17 @@
     async function initializeUserPfp() {
       const context = await window.detectFarcasterContext();
       if (context.isFarcasterMiniapp) {
-        await fetchUserPfp();
+        const pfp = await fetchUserPfp();
+        if (!pfp) {
+          console.log('❌ Could not fetch user PFP from Farcaster SDK');
+          // Disable PFP option if no PFP found
+          pfpOption.style.display = 'none';
+          pfpOption.style.opacity = '0.5';
+          pfpOption.title = 'PFP not available - could not fetch from Farcaster';
+        } else {
+          pfpOption.style.opacity = '1';
+          pfpOption.title = 'Degenify your profile picture';
+        }
       }
     }
 
@@ -1963,6 +1975,9 @@ Create yours on www.degenify.xyz`;
           addToFarcasterBtn.style.display = 'none';
           console.log('❌ HIDING button - not in miniapp context or SDK not ready');
         }
+
+        // Also update PFP option visibility
+        await updatePfpVisibility();
       };
 
       // Initial check
