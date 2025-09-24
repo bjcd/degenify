@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1377,11 +1377,31 @@
     }
 
 
+    // Safe property access for Proxy functions
+    function safeGet(obj, path) {
+      try {
+        return path.split('.').reduce((acc, key) => {
+          if (acc == null) return null;
+          const val = acc[key];
+          if (typeof val === 'function') {
+            try {
+              return val();
+            } catch {
+              return val;
+            }
+          }
+          return val;
+        }, obj);
+      } catch {
+        return null;
+      }
+    }
+
     // Simple PFP fetching for miniapps
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
-        
+
         // Check if we're in a miniapp
         if (!(await sdk.isInMiniApp())) {
           console.log('❌ Not in miniapp context');
@@ -1391,14 +1411,15 @@
         console.log('🔍 Getting PFP from miniapp context...');
 
         // In miniapps, the user PFP should be directly available
-        // Try to access it directly without complex Proxy handling
+        // Handle Proxy functions properly
         const context = sdk.context;
         console.log('🔍 Raw context:', context);
-        
-        // Try direct access first
-        if (context && context.user && context.user.pfpUrl) {
-          userPfpUrl = context.user.pfpUrl;
-          console.log('✅ User PFP URL from direct access:', userPfpUrl);
+
+        // Try to get user PFP with safe access
+        const userPfp = safeGet(context, 'user.pfpUrl');
+        if (userPfp && typeof userPfp === 'string') {
+          userPfpUrl = userPfp;
+          console.log('✅ User PFP URL from safe access:', userPfpUrl);
           return userPfpUrl;
         }
 
@@ -1406,8 +1427,9 @@
         try {
           console.log('🔍 Trying viewProfile action...');
           const profile = await sdk.actions.viewProfile({ fid: 1 }); // Use a dummy FID first
-          if (profile && profile.user && profile.user.pfpUrl) {
-            userPfpUrl = profile.user.pfpUrl;
+          const profilePfp = safeGet(profile, 'user.pfpUrl');
+          if (profilePfp && typeof profilePfp === 'string') {
+            userPfpUrl = profilePfp;
             console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
             return userPfpUrl;
           }
@@ -1515,6 +1537,12 @@
             throw new Error('PFP URL not available. Please try again.');
           }
           userPfpUrl = pfp;
+        }
+
+        // Ensure userPfpUrl is a valid string, not a Proxy function
+        if (isPfpMode && userPfpUrl && typeof userPfpUrl !== 'string') {
+          console.log('❌ PFP generation failed: userPfpUrl is not a string:', typeof userPfpUrl);
+          throw new Error('Invalid PFP URL format. Please try again.');
         }
 
         console.log('🔍 Generation request:', { endpoint, isPfpMode, userPfpUrl: isPfpMode ? userPfpUrl : 'N/A' });
