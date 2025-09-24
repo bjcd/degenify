@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1621,7 +1621,7 @@
 
       // Update loading message for PFP mode
       if (isPfpMode) {
-        loadingState.innerHTML = '<div class="loading-spinner"></div><p>Degenifying your PFP... This may take a moment</p>';
+        loadingState.innerHTML = '<div class="loading-spinner rotating-hat"></div><p>Degenifying your PFP... This may take a moment</p>';
       }
 
       try {
@@ -1688,12 +1688,12 @@
           // If this is not the last attempt, wait before retrying
           if (attempt < maxRetries) {
             console.log(`⏳ Waiting 1 second before retry ${attempt + 1}...`);
-            
+
             // Update loading message to show retry
             if (isPfpMode) {
-              loadingState.innerHTML = `<div class="loading-spinner"></div><p>Retrying PFP generation... Attempt ${attempt + 1}/${maxRetries}</p>`;
+              loadingState.innerHTML = `<div class="loading-spinner rotating-hat"></div><p>Retrying PFP generation... Attempt ${attempt + 1}/${maxRetries}</p>`;
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced from 2s to 1s
           }
         }
