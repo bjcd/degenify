@@ -1427,12 +1427,13 @@
 
         console.log('🔍 Getting user FID from miniapp context...');
 
-        // Try to get FID from miniapp context (this should work without APPLY errors)
+        // Try to get FID from miniapp context - context is a FUNCTION!
         let userFid = null;
         try {
-          // Try to access context properties safely
-          const context = sdk.context;
-          console.log('🔍 Raw context object:', context);
+          // Context is a function that needs to be called!
+          console.log('🔍 Calling sdk.context() to get actual context data...');
+          const context = await sdk.context();
+          console.log('🔍 Context result:', context);
           console.log('🔍 Context type:', typeof context);
           console.log('🔍 Context keys:', Object.keys(context || {}));
           
@@ -1451,15 +1452,15 @@
               console.log('🔍 No FID found in context object');
             }
           } else {
-            console.log('🔍 Context is not a valid object');
+            console.log('🔍 Context is not a valid object after calling');
           }
         } catch (contextError) {
-          console.log('⚠️ Context access failed:', contextError);
+          console.log('⚠️ Context call failed:', contextError);
         }
 
         if (userFid) {
           console.log('🔍 Got user FID from context:', userFid);
-          
+
           // Send FID to our server to fetch PFP (server-side API call)
           try {
             const response = await fetch('/api/get-user-pfp', {
@@ -1484,17 +1485,17 @@
         } else {
           // Alternative approach: try to get user data via signIn or other SDK methods
           console.log('🔍 Trying alternative approach - checking for user data in different ways...');
-          
+
           try {
             // Try to get user data via viewProfile with a known working FID first
             console.log('🔍 Testing viewProfile with FID 1 to see if it works...');
             const testProfile = await sdk.actions.viewProfile({ fid: 1 });
             console.log('🔍 Test profile result:', testProfile);
-            
+
             // If viewProfile works, maybe we can get current user info differently
             // Let's try to access the context in a different way
             console.log('🔍 Trying to access context properties more deeply...');
-            const context = sdk.context;
+            const context = await sdk.context();
             
             // Try to access nested properties
             if (context && typeof context === 'object') {
@@ -1506,7 +1507,7 @@
                 console.log(`🔍 Context.${key}:`, context[key]);
               }
             }
-            
+
           } catch (altError) {
             console.log('⚠️ Alternative approach failed:', altError);
           }
