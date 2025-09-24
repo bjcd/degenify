@@ -28,12 +28,20 @@
     content="Degenify any situation with our purple hat mascot character using AI image generation. Create unique, fun images instantly.">
   <meta name="twitter:image" content="https://www.degenify.xyz/miniapp-icon.png">
 
-  <!-- Farcaster Frame Meta Tags for Rich Cards -->
-  <meta name="fc:frame" content='{"version":"vNext","image":"https://www.degenify.xyz/miniapp-icon.png","imageAspectRatio":"1:1","buttons":[{"label":"Open Degenify","action":"link","target":"https://www.degenify.xyz"}]}'>
-
   <!-- Farcaster Mini App Meta Tags -->
-  <meta property="fc:miniapp"
-    content='{"name": "Degenify", "version": "2", "iconUrl": "https://www.degenify.xyz/miniapp-icon.png", "homeUrl": "https://www.degenify.xyz", "imageUrl": "https://www.degenify.xyz/miniapp-icon.png", "buttonTitle": "Open mini app", "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png", "splashBackgroundColor": "#e8d3f4"}'>
+  <meta name="fc:miniapp" content='{
+    "version": "1",
+    "imageUrl": "https://www.degenify.xyz/miniapp-screenshot.png",
+    "button": {
+      "title": "Open mini app",
+      "action": {
+        "type": "launch_frame",
+        "url": "https://www.degenify.xyz",
+        "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "splashBackgroundColor": "#e8d3f4"
+      }
+    }
+  }'>
 
   <!-- Manifest Link -->
   <link rel="manifest" href="/.well-known/farcaster.json">
