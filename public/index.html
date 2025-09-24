@@ -1376,93 +1376,55 @@
       return true;
     }
 
-    // Wait for user to be populated
-    async function waitForUser(maxMs = 3000) {
-      const sdk = await getSdk();
-      const t0 = performance.now();
-      while (performance.now() - t0 < maxMs) {
-        const u = sdk.context?.user;
-        if (u && typeof u === 'object' && u.pfpUrl) {
-          console.log('✅ User found in context:', u);
-          return u;
-        }
-        await sleep(50);
-      }
-      console.log('❌ User not found in context after timeout');
-      return null;
-    }
 
-    // Safe property access for Proxy functions
-    function getProperty(obj, path) {
-      try {
-        return path.split('.').reduce((acc, key) => {
-          if (acc == null) return null;
-          const val = acc[key];
-          if (typeof val === 'function') {
-            try {
-              return val();
-            } catch {
-              return val;
-            }
-          }
-          return val;
-        }, obj);
-      } catch {
-        return null;
-      }
-    }
-
-    // Bulletproof PFP fetching (ChatGPT's exact solution)
+    // Simple PFP fetching for miniapps
     async function getPfpUrl() {
-      const sdk = await getSdk();
+      try {
+        const sdk = await getSdk();
+        
+        // Check if we're in a miniapp
+        if (!(await sdk.isInMiniApp())) {
+          console.log('❌ Not in miniapp context');
+          return null;
+        }
 
-      // 0) must actually be in a mini app
-      if (!(await ensureMiniAppReady())) {
-        console.log('❌ Not in miniapp or not ready');
+        console.log('🔍 Getting PFP from miniapp context...');
+
+        // In miniapps, the user PFP should be directly available
+        // Try to access it directly without complex Proxy handling
+        const context = sdk.context;
+        console.log('🔍 Raw context:', context);
+        
+        // Try direct access first
+        if (context && context.user && context.user.pfpUrl) {
+          userPfpUrl = context.user.pfpUrl;
+          console.log('✅ User PFP URL from direct access:', userPfpUrl);
+          return userPfpUrl;
+        }
+
+        // If direct access fails, try the viewProfile action
+        try {
+          console.log('🔍 Trying viewProfile action...');
+          const profile = await sdk.actions.viewProfile({ fid: 1 }); // Use a dummy FID first
+          if (profile && profile.user && profile.user.pfpUrl) {
+            userPfpUrl = profile.user.pfpUrl;
+            console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
+            return userPfpUrl;
+          }
+        } catch (viewError) {
+          console.log('⚠️ viewProfile failed:', viewError);
+        }
+
+        console.log('❌ No PFP found in miniapp context');
+        return null;
+      } catch (error) {
+        console.log('❌ Error getting PFP:', error);
         return null;
       }
-
-      console.log('🔍 Getting PFP from context...');
-
-      // 1) viewer PFP (preferred) - handle Proxy functions
-      const user = await waitForUser();
-      const userPfp = getProperty(user, 'pfpUrl');
-      if (userPfp) {
-        userPfpUrl = userPfp;
-        console.log('✅ User PFP URL from context.user:', userPfpUrl);
-        return userPfpUrl;
-      }
-
-      // 2) cast author PFP (if launched from a cast) - handle Proxy functions
-      const author = getProperty(sdk.context, 'location.cast.author');
-      const authorPfp = getProperty(author, 'pfpUrl');
-      if (authorPfp) {
-        userPfpUrl = authorPfp;
-        console.log('✅ User PFP URL from cast author:', userPfpUrl);
-        return userPfpUrl;
-      }
-
-      // 3) gentle auth nudge (desktop often needs this)
-      try {
-        console.log('🔍 Attempting sign in...');
-        await sdk.actions.signIn?.();  // no options; keep it simple
-      } catch (e) {
-        console.log('⚠️ Sign in failed:', e);
-      }
-
-      const pfp = getProperty(sdk.context, 'user.pfpUrl');
-      if (pfp) {
-        userPfpUrl = pfp;
-        console.log('✅ User PFP URL after sign in:', userPfpUrl);
-        return userPfpUrl;
-      }
-      
-      console.log('❌ No pfpUrl found after all attempts');
-      return null;
     }
 
     // Initialize user PFP using bulletproof method
-    async function initializeUserPfp() {
+    window.initializeUserPfp = async function initializeUserPfp() {
       console.log('🔍 initializeUserPfp called');
       try {
         const pfp = await getPfpUrl();
