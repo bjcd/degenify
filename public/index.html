@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1319,45 +1319,13 @@
     // Initialize toggle state
     updateToggleState();
 
-    // Show/hide PFP option based on miniapp context - use official SDK methods directly
+    // Update PFP visibility - drive from live values
     window.updatePfpVisibility = async function updatePfpVisibility() {
       try {
-        // Use official Farcaster SDK methods directly (as per documentation)
-        let isInMiniApp = false;
-        let platform = 'web';
-        let client = null;
-
-        if (window.farcaster && window.farcaster.isInMiniApp) {
-          try {
-            isInMiniApp = await window.farcaster.isInMiniApp();
-            console.log('🔍 SDK isInMiniApp():', isInMiniApp);
-          } catch (error) {
-            console.log('❌ isInMiniApp() failed:', error);
-          }
-        }
-
-        if (window.farcaster && window.farcaster.context) {
-          try {
-            // Use safe context access
-            const ctx = safeContext();
-            console.log('🔍 Raw SDK context:', ctx);
-            
-            // Extract platform and client values safely
-            platform = getSafe(ctx, 'platform', 'web');
-            client = getSafe(ctx, 'client.id', null);
-            console.log('🔍 SDK context values:', { platform, client });
-          } catch (error) {
-            console.log('❌ context access failed:', error);
-          }
-        }
-
-        console.log('🔍 PFP OFFICIAL SDK DETECTION:');
-        console.log('- isInMiniApp:', isInMiniApp);
-        console.log('- platform:', platform);
-        console.log('- client:', client);
-
-        // Show PFP option only in miniapp context (as per official docs)
-        if (isInMiniApp) {
+        const inMini = await window.farcaster.isInMiniApp();
+        const show = !!inMini; // we'll wait for user later in getPfpUrl()
+        
+        if (show) {
           pfpOption.style.display = 'flex';
           console.log('✅ PFP option shown - in miniapp context');
         } else {
@@ -1379,147 +1347,101 @@
     // Check PFP visibility on page load and when SDK loads
     console.log('🔍 Initial PFP visibility check...');
     updatePfpVisibility();
+    
+    // Small re-check after a delay to catch SDK state changes
+    setTimeout(updatePfpVisibility, 300);
 
 
-    // Safe context access helper
-    function safeContext() {
-      const raw = window.farcaster?.context;
-      if (typeof raw === 'function') {
-        try { 
-          return raw(); 
-        } catch { 
-          return raw; 
-        }
-      }
-      return raw;
+    // Super-dumb context reader (never call, never await, never JSON.stringify)
+    function ctx() {
+      const c = window.farcaster?.context;
+      // Never call, never await, never JSON.stringify it.
+      return (c && typeof c === 'object') ? c : {};
     }
 
-    // Safe property access helper
-    function getSafe(obj, path, defaultValue = null) {
-      return path.split('.').reduce((acc, key) => {
-        if (acc == null) return null;
-        const v = acc[key];
-        if (typeof v === 'function') {
-          try { 
-            return v(); 
-          } catch { 
-            return v; 
-          }
-        }
-        return v;
-      }, obj) ?? defaultValue;
+    // Sleep helper
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Ensure miniapp is ready
+    async function ensureMiniAppReady() {
+      // Don't run early UI gating until this resolves
+      if (!(await window.farcaster.isInMiniApp())) return false;
+      try { 
+        await window.farcaster.actions.ready?.(); 
+      } catch {}
+      return true;
     }
 
-    // Wait for user to be populated in context
+    // Wait for user to be populated
     async function waitForUser(maxMs = 3000) {
       const t0 = performance.now();
       while (performance.now() - t0 < maxMs) {
-        const ctx = safeContext();
-        const user = getSafe(ctx, 'user');
-        if (user) {
-          console.log('✅ User found in context:', user);
-          return user;
+        const u = ctx().user;
+        if (u) {
+          console.log('✅ User found in context:', u);
+          return u;
         }
-        await new Promise(r => setTimeout(r, 50));
+        await sleep(50);
       }
       console.log('❌ User not found in context after timeout');
       return null;
     }
 
-    // Fetch user's PFP with proper waiting and fallbacks
-    async function fetchUserPfp() {
-      try {
-        if (!window.farcaster) {
-          console.log('❌ Farcaster SDK not available');
-          return null;
-        }
-
-        console.log('🔍 Getting PFP from sdk.context...');
-        
-        // Ensure we're in a miniapp
-        const isInMini = await window.farcaster.isInMiniApp();
-        if (!isInMini) {
-          console.log('❌ Not in miniapp context');
-          return null;
-        }
-
-        // Wait for SDK to be ready
-        try { 
-          await window.farcaster.actions.ready?.(); 
-        } catch (e) {
-          console.log('⚠️ SDK ready() failed:', e);
-        }
-
-        // Wait for user to be populated
-        const user = await waitForUser();
-        if (user?.pfpUrl) {
-          userPfpUrl = user.pfpUrl;
-          console.log('✅ User PFP URL from context.user:', userPfpUrl);
-          return userPfpUrl;
-        }
-
-        // Fallback: try to get PFP from cast author if launched from a cast
-        const ctx = safeContext();
-        const castAuthor = getSafe(ctx, 'location.cast.author');
-        if (castAuthor?.pfpUrl) {
-          userPfpUrl = castAuthor.pfpUrl;
-          console.log('✅ User PFP URL from cast author:', userPfpUrl);
-          return userPfpUrl;
-        }
-
-        // Last resort: try to sign in
-        try {
-          console.log('🔍 Attempting sign in...');
-          await window.farcaster.actions.signIn?.();
-          const userAfterSignIn = getSafe(safeContext(), 'user');
-          if (userAfterSignIn?.pfpUrl) {
-            userPfpUrl = userAfterSignIn.pfpUrl;
-            console.log('✅ User PFP URL after sign in:', userPfpUrl);
-            return userPfpUrl;
-          }
-        } catch (signInError) {
-          console.log('❌ Sign in failed:', signInError);
-        }
-        
-        console.log('❌ No pfpUrl found after all attempts');
-        return null;
-      } catch (error) {
-        console.log('❌ Error fetching user PFP:', error);
+    // Bulletproof PFP fetching
+    async function getPfpUrl() {
+      if (!(await ensureMiniAppReady())) {
+        console.log('❌ Not in miniapp or not ready');
         return null;
       }
+
+      console.log('🔍 Getting PFP from context...');
+
+      // 1) viewer pfp
+      const user = await waitForUser();
+      if (typeof user?.pfpUrl === 'string' && user.pfpUrl) {
+        userPfpUrl = user.pfpUrl;
+        console.log('✅ User PFP URL from context.user:', userPfpUrl);
+        return userPfpUrl;
+      }
+
+      // 2) cast author (if opened from a cast)
+      const author = ctx()?.location?.cast?.author;
+      if (typeof author?.pfpUrl === 'string' && author.pfpUrl) {
+        userPfpUrl = author.pfpUrl;
+        console.log('✅ User PFP URL from cast author:', userPfpUrl);
+        return userPfpUrl;
+      }
+
+      // 3) ask to sign in (desktop/web often needs this), then re-check
+      try { 
+        console.log('🔍 Attempting sign in...');
+        await window.farcaster.actions.signIn?.(); 
+      } catch {}
+      const p = ctx()?.user?.pfpUrl;
+      if (typeof p === 'string' && p) {
+        userPfpUrl = p;
+        console.log('✅ User PFP URL after sign in:', userPfpUrl);
+        return userPfpUrl;
+      }
+      
+      console.log('❌ No pfpUrl found after all attempts');
+      return null;
     }
 
-    // Try to fetch user PFP when in miniapp context - use official SDK methods directly
+    // Initialize user PFP using bulletproof method
     async function initializeUserPfp() {
       console.log('🔍 initializeUserPfp called');
       try {
-        // Use official Farcaster SDK methods directly (as per documentation)
-        let isInMiniApp = false;
-
-        if (window.farcaster && window.farcaster.isInMiniApp) {
-          try {
-            isInMiniApp = await window.farcaster.isInMiniApp();
-            console.log('🔍 initializeUserPfp - isInMiniApp:', isInMiniApp);
-          } catch (error) {
-            console.log('❌ isInMiniApp() failed in initializeUserPfp:', error);
-          }
-        }
-
-        if (isInMiniApp) {
-          console.log('🔍 In miniapp, fetching PFP...');
-          const pfp = await fetchUserPfp();
-          if (!pfp) {
-            console.log('❌ Could not fetch user PFP from Farcaster SDK');
-            // Keep PFP option visible but disable it if no PFP found
-            pfpOption.style.opacity = '0.5';
-            pfpOption.title = 'PFP not available - could not fetch from Farcaster';
-          } else {
-            console.log('✅ PFP fetched successfully:', pfp);
-            pfpOption.style.opacity = '1';
-            pfpOption.title = 'Degenify your profile picture';
-          }
+        const pfp = await getPfpUrl();
+        if (!pfp) {
+          console.log('❌ Could not fetch user PFP');
+          // Keep PFP option visible but disable it if no PFP found
+          pfpOption.style.opacity = '0.5';
+          pfpOption.title = 'PFP not available - could not fetch from Farcaster';
         } else {
-          console.log('🔍 Not in miniapp, skipping PFP fetch');
+          console.log('✅ PFP fetched successfully:', pfp);
+          pfpOption.style.opacity = '1';
+          pfpOption.title = 'Degenify your profile picture';
         }
       } catch (error) {
         console.log('❌ Error in initializeUserPfp:', error);
@@ -1589,11 +1511,16 @@
           promptContext: currentPromptContext
         };
 
-        // Validate PFP URL for PFP mode
-        if (isPfpMode && !userPfpUrl) {
-          console.log('❌ PFP generation failed: userPfpUrl is null');
-          throw new Error('PFP URL not available. Please try again.');
-        }
+          // Validate PFP URL for PFP mode
+          if (isPfpMode && !userPfpUrl) {
+            console.log('🔍 PFP mode but no userPfpUrl, trying to fetch...');
+            const pfp = await getPfpUrl();
+            if (!pfp) {
+              console.log('❌ PFP generation failed: could not fetch PFP URL');
+              throw new Error('PFP URL not available. Please try again.');
+            }
+            userPfpUrl = pfp;
+          }
 
         console.log('🔍 Generation request:', { endpoint, isPfpMode, userPfpUrl: isPfpMode ? userPfpUrl : 'N/A' });
 
