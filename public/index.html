@@ -1338,12 +1338,13 @@
 
         if (window.farcaster && window.farcaster.context) {
           try {
-            const ctx = await window.farcaster.context();
+            // Read context directly (no parentheses - it's a property!)
+            const ctx = window.farcaster.context;
             platform = ctx.platform || 'web';
             client = ctx.client?.id || null;
-            console.log('🔍 SDK context():', { platform, client });
+            console.log('🔍 SDK context:', { platform, client });
           } catch (error) {
-            console.log('❌ context() failed:', error);
+            console.log('❌ context access failed:', error);
           }
         }
 
@@ -1377,53 +1378,37 @@
     updatePfpVisibility();
 
 
-    // Fetch user's PFP using viewProfile action directly
+    // Fetch user's PFP from sdk.context directly (no parentheses!)
     async function fetchUserPfp() {
       try {
-        if (window.farcaster && window.farcaster.actions && window.farcaster.actions.viewProfile) {
-          console.log('🔍 Trying to get user profile using viewProfile action...');
+        if (window.farcaster && window.farcaster.context) {
+          console.log('🔍 Getting PFP from sdk.context directly...');
           
-          // Try to get the current user's profile using viewProfile
-          // We'll try with a common FID first, or use the action without parameters
-          try {
-            // First, let's try to get the profile without specifying a FID (current user)
-            const profile = await window.farcaster.actions.viewProfile();
-            console.log('🔍 Profile from viewProfile (no FID):', profile);
-            
-            if (profile && profile.user && profile.user.pfpUrl) {
-              userPfpUrl = profile.user.pfpUrl;
-              console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
+          // Read sdk.context directly (no parentheses - it's a property!)
+          const context = window.farcaster.context;
+          console.log('🔍 Farcaster context:', context);
+          
+          // Try to get PFP from context.user.pfpUrl
+          if (context?.user?.pfpUrl) {
+            userPfpUrl = context.user.pfpUrl;
+            console.log('✅ User PFP URL from context.user:', userPfpUrl);
+            return userPfpUrl;
+          }
+          
+          // Fallback: try to get PFP from cast author if launched from a cast
+          if (context?.location?.type === 'cast_embed' || context?.location?.type === 'cast_share') {
+            const fallbackPfp = context.location.cast?.author?.pfpUrl;
+            if (fallbackPfp) {
+              userPfpUrl = fallbackPfp;
+              console.log('✅ User PFP URL from cast author:', userPfpUrl);
               return userPfpUrl;
             }
-          } catch (viewProfileError) {
-            console.log('❌ viewProfile without FID failed:', viewProfileError);
           }
           
-          // If that doesn't work, try to get FID from URL or other sources
-          try {
-            // Check if we can get FID from the URL or other sources
-            const urlParams = new URLSearchParams(window.location.search);
-            const fidFromUrl = urlParams.get('fid');
-            
-            if (fidFromUrl) {
-              console.log('🔍 FID from URL:', fidFromUrl);
-              const profile = await window.farcaster.actions.viewProfile({ fid: parseInt(fidFromUrl) });
-              console.log('🔍 Profile from viewProfile (FID from URL):', profile);
-              
-              if (profile && profile.user && profile.user.pfpUrl) {
-                userPfpUrl = profile.user.pfpUrl;
-                console.log('✅ User PFP URL from viewProfile (FID from URL):', userPfpUrl);
-                return userPfpUrl;
-              }
-            }
-          } catch (urlFidError) {
-            console.log('❌ viewProfile with FID from URL failed:', urlFidError);
-          }
-          
-          console.log('❌ Could not get PFP from viewProfile action');
+          console.log('❌ No pfpUrl found in context.user or cast author');
           return null;
         } else {
-          console.log('❌ Farcaster SDK or viewProfile action not available');
+          console.log('❌ Farcaster SDK not available');
           return null;
         }
       } catch (error) {
