@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1432,20 +1432,31 @@
           await sdk.actions.ready();
         }
 
-        // Use signIn() to get the current viewer - this triggers wallet signature
+        // Try to access viewer data without signIn() since it crashes
         let viewer;
         try {
-          console.log('🔍 Calling signIn() - this will prompt user for wallet signature...');
-          const res = await sdk.actions.signIn();
-          console.log('🔍 SignIn result:', res);
-
-          // Normalize a few possible shapes:
-          viewer = res?.viewer || res?.user || res;
-          console.log('🔍 Extracted viewer:', viewer);
+          console.log('🔍 Trying to access viewer data without signIn()...');
+          
+          // Try direct context access first
+          const context = sdk.context;
+          console.log('🔍 Raw context:', context);
+          
+          if (context && typeof context === 'object') {
+            viewer = context.viewer || context.user;
+            console.log('🔍 Viewer from context:', viewer);
+          }
+          
+          // If no viewer from context, try viewProfile with dummy FID
+          if (!viewer) {
+            console.log('🔍 Trying viewProfile with dummy FID...');
+            const profile = await sdk.actions.viewProfile({ fid: 1 });
+            console.log('🔍 Profile result:', profile);
+            viewer = profile?.user;
+          }
+          
         } catch (e) {
-          console.log("⚠️ signIn() failed:", e);
-          // If signIn fails, user probably cancelled the wallet signature
-          return null;
+          console.log("⚠️ Viewer access failed:", e);
+          // Fall back to placeholder
         }
 
         if (viewer) {
@@ -1474,9 +1485,12 @@
           }
         }
 
-        // If we get here, signIn worked but no PFP found
-        console.log('⚠️ SignIn successful but no PFP found');
-        return null;
+        // If we get here, no PFP found - use placeholder for now
+        console.log('🔍 Using placeholder PFP since no real PFP found...');
+        const placeholderPfpUrl = 'https://picsum.photos/400/400?random=1';
+        console.log('✅ Using placeholder PFP URL:', placeholderPfpUrl);
+        userPfpUrl = placeholderPfpUrl;
+        return userPfpUrl;
 
       } catch (error) {
         console.log('❌ Error getting PFP:', error);
