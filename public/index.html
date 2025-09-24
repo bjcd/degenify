@@ -1414,7 +1414,7 @@
       }
     }
 
-    // Get user's PFP from miniapp viewer context
+    // Get user's PFP using signIn() - the standard miniapp approach
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
@@ -1425,69 +1425,58 @@
           return null;
         }
 
-        console.log('🔍 Getting user PFP from miniapp viewer context...');
+        console.log('🔍 Getting user PFP via signIn()...');
 
-        try {
-          // Get context - handle both function and property access
-          const ctx = typeof sdk.context === "function" ? await sdk.context() : sdk.context;
-          console.log('🔍 Context result:', ctx);
-          
-          // Get viewer - handle function proxy
-          const viewer = typeof ctx.viewer === "function" ? await ctx.viewer() : ctx.viewer;
-          console.log('🔍 Viewer result:', viewer);
-          
-          if (viewer) {
-            // Get pfpUrl - handle function proxy
-            let pfpUrl = viewer?.pfpUrl;
-            pfpUrl = typeof pfpUrl === "function" ? await pfpUrl() : pfpUrl;
-            console.log('🔍 PFP URL from viewer:', pfpUrl);
-            
-            if (pfpUrl && typeof pfpUrl === 'string') {
-              console.log('✅ Found PFP in context.viewer.pfpUrl:', pfpUrl);
-              userPfpUrl = pfpUrl;
-              return userPfpUrl;
-            }
-            
-            // Try alternative path: viewer.pfp.url
-            if (viewer?.pfp?.url) {
-              let pfpUrlAlt = viewer.pfp.url;
-              pfpUrlAlt = typeof pfpUrlAlt === "function" ? await pfpUrlAlt() : pfpUrlAlt;
-              console.log('🔍 PFP URL from viewer.pfp.url:', pfpUrlAlt);
-              
-              if (pfpUrlAlt && typeof pfpUrlAlt === 'string') {
-                console.log('✅ Found PFP in context.viewer.pfp.url:', pfpUrlAlt);
-                userPfpUrl = pfpUrlAlt;
-                return userPfpUrl;
-              }
-            }
-          }
-          
-          // Try alternative path: context.user
-          const user = typeof ctx.user === "function" ? await ctx.user() : ctx.user;
-          console.log('🔍 User result:', user);
-          
-          if (user) {
-            let pfpUrl = user?.pfpUrl;
-            pfpUrl = typeof pfpUrl === "function" ? await pfpUrl() : pfpUrl;
-            console.log('🔍 PFP URL from user:', pfpUrl);
-            
-            if (pfpUrl && typeof pfpUrl === 'string') {
-              console.log('✅ Found PFP in context.user.pfpUrl:', pfpUrl);
-              userPfpUrl = pfpUrl;
-              return userPfpUrl;
-            }
-          }
-          
-        } catch (contextError) {
-          console.log('⚠️ Context access failed:', contextError);
+        // Make sure bridge is ready first
+        if (sdk?.actions?.ready) {
+          await sdk.actions.ready();
         }
 
-        // Fallback: use placeholder for testing
-        console.log('🔍 Using placeholder PFP as fallback...');
-        const placeholderPfpUrl = 'https://picsum.photos/400/400?random=1';
-        console.log('✅ Using placeholder PFP URL:', placeholderPfpUrl);
-        userPfpUrl = placeholderPfpUrl;
-        return userPfpUrl;
+        // Use signIn() to get the current viewer - this triggers wallet signature
+        let viewer;
+        try {
+          console.log('🔍 Calling signIn() - this will prompt user for wallet signature...');
+          const res = await sdk.actions.signIn();
+          console.log('🔍 SignIn result:', res);
+
+          // Normalize a few possible shapes:
+          viewer = res?.viewer || res?.user || res;
+          console.log('🔍 Extracted viewer:', viewer);
+        } catch (e) {
+          console.log("⚠️ signIn() failed:", e);
+          // If signIn fails, user probably cancelled the wallet signature
+          return null;
+        }
+
+        if (viewer) {
+          // Try multiple possible PFP URL paths
+          let pfpUrl =
+            viewer?.pfpUrl ??
+            viewer?.pfp?.url ??
+            viewer?.profileImage ??
+            viewer?.avatarUrl ??
+            null;
+
+          console.log('🔍 Raw PFP URL:', pfpUrl);
+
+          // Some proxies wrap leaf props as functions too:
+          if (typeof pfpUrl === "function") {
+            try {
+              pfpUrl = await pfpUrl();
+              console.log('🔍 Called PFP URL function:', pfpUrl);
+            } catch { }
+          }
+
+          if (typeof pfpUrl === "string" && pfpUrl.length > 0) {
+            console.log('✅ Found real PFP URL:', pfpUrl);
+            userPfpUrl = pfpUrl;
+            return userPfpUrl;
+          }
+        }
+
+        // If we get here, signIn worked but no PFP found
+        console.log('⚠️ SignIn successful but no PFP found');
+        return null;
 
       } catch (error) {
         console.log('❌ Error getting PFP:', error);
@@ -1495,24 +1484,13 @@
       }
     }
 
-    // Initialize user PFP using bulletproof method
+    // Initialize user PFP - just show the option, don't fetch PFP yet
     window.initializeUserPfp = async function initializeUserPfp() {
-      console.log('🔍 initializeUserPfp called');
-      try {
-        const pfp = await getPfpUrl();
-        if (!pfp) {
-          console.log('❌ Could not fetch user PFP');
-          // Keep PFP option visible but disable it if no PFP found
-          pfpOption.style.opacity = '0.5';
-          pfpOption.title = 'PFP not available - could not fetch from Farcaster';
-        } else {
-          console.log('✅ PFP fetched successfully:', pfp);
-          pfpOption.style.opacity = '1';
-          pfpOption.title = 'Degenify your profile picture';
-        }
-      } catch (error) {
-        console.log('❌ Error in initializeUserPfp:', error);
-      }
+      console.log('🔍 initializeUserPfp called - PFP option will be available');
+      // Just ensure the PFP option is visible and ready
+      // The actual PFP fetching will happen when they click "My PFP"
+      pfpOption.style.opacity = '1';
+      pfpOption.title = 'Click to degenify your profile picture (requires wallet signature)';
     }
 
     // Initialize user PFP
