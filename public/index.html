@@ -1436,19 +1436,22 @@
         let viewer;
         try {
           console.log('🔍 Calling native Farcaster signIn() with nonce...');
-          
-          // Generate a simple nonce (in production, this should come from your server)
-          const nonce = `degenify-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+          // Generate a proper alphanumeric nonce (SIWE requirement: min 8 chars, alphanumeric only)
+          const nonce = `degenify${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
           console.log('🔍 Generated nonce:', nonce);
-          
-          // Call signIn() with nonce - this should launch native Farcaster wallet interface
-          const result = await sdk.actions.signIn({ nonce });
+
+          // Call signIn() with nonce and acceptAuthAddress - this should launch native Farcaster wallet interface
+          const result = await sdk.actions.signIn({ 
+            nonce,
+            acceptAuthAddress: true
+          });
           console.log('🔍 SignIn result:', result);
-          
+
           // The result should contain the SIWF message and signature
           if (result && result.message) {
             console.log('✅ SignIn successful, got message:', result.message);
-            
+
             // Extract user data from the message
             const message = result.message;
             if (message.data && message.data.fid) {
@@ -1458,10 +1461,17 @@
               viewer = profile?.user;
             }
           }
-          
+
         } catch (e) {
           console.log("⚠️ SignIn failed:", e);
-          // If signIn fails, try fallback approaches
+          
+          // Handle specific error types
+          if (e.name === 'RejectedByUser') {
+            console.log("❌ User rejected the sign-in request");
+            return null; // User cancelled, don't try fallbacks
+          }
+          
+          // If signIn fails for other reasons, try fallback approaches
           try {
             console.log('🔍 Trying fallback: direct context access...');
             const context = sdk.context;
