@@ -1393,15 +1393,15 @@
           // First get the user's FID from context
           const context = await window.farcaster.context();
           console.log('🔍 Farcaster context:', context);
-          
+
           if (context.user && context.user.fid) {
             const fid = context.user.fid;
             console.log('🔍 User FID:', fid);
-            
+
             // Use viewProfile action to get the full profile including pfpUrl
             const profile = await window.farcaster.actions.viewProfile({ fid });
             console.log('🔍 User profile:', profile);
-            
+
             if (profile && profile.user && profile.user.pfpUrl) {
               userPfpUrl = profile.user.pfpUrl;
               console.log('✅ User PFP URL:', userPfpUrl);
