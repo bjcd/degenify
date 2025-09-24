@@ -1616,6 +1616,12 @@
       const prompt = promptInput.value.trim();
       if (!prompt) return;
 
+      // Prevent multiple simultaneous requests
+      if (isPaymentInProgress) {
+        console.log('⚠️ Operation already in progress, please wait...');
+        return;
+      }
+
       // For PFP mode, handle payment first, then generate
       if (isPfpMode) {
         await handlePfpPayment(prompt);
@@ -1728,14 +1734,26 @@
       }
     }
 
+    // Payment state to prevent multiple simultaneous attempts
+    let isPaymentInProgress = false;
+
     // Native PFP payment flow
     async function handlePfpPayment(prompt) {
+      if (isPaymentInProgress) {
+        console.log('⚠️ Payment already in progress, ignoring duplicate request');
+        return;
+      }
+
       try {
+        isPaymentInProgress = true;
         console.log('💰 Starting native PFP payment flow...');
 
         // Get user's wallet address via signIn
         const sdk = await getSdk();
-        const signInResult = await sdk.actions.signIn({
+        console.log('🔍 SDK object:', sdk);
+        console.log('🔍 SDK sendToken method:', typeof sdk.sendToken);
+        
+        const signInResult = await sdk.actions.signIn({ 
           nonce: `degenify-payment-${Date.now()}`,
           acceptAuthAddress: true
         });
@@ -1759,13 +1777,24 @@
         const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488';
 
         console.log('🔍 Opening native wallet for 50 $DEGEN payment to treasury...');
-        const paymentResult = await sdk.sendToken({
+        console.log('🔍 SDK sendToken params:', {
           token: DEGEN_CONTRACT,
           amount: DEGEN_AMOUNT,
           recipientAddress: TREASURY_ADDRESS
         });
-
-        console.log('✅ Payment dialog opened successfully');
+        
+        try {
+          const paymentResult = await sdk.sendToken({
+            token: DEGEN_CONTRACT,
+            amount: DEGEN_AMOUNT,
+            recipientAddress: TREASURY_ADDRESS
+          });
+          
+          console.log('✅ Payment dialog opened successfully:', paymentResult);
+        } catch (sendTokenError) {
+          console.error('❌ sendToken failed:', sendTokenError);
+          throw new Error(`Failed to open payment dialog: ${sendTokenError.message}`);
+        }
 
         // The SDK opens the wallet dialog, user confirms there
         // For now, let's proceed with generation (you may want to add proper tx confirmation later)
@@ -1777,6 +1806,8 @@
       } catch (error) {
         console.error('PFP payment error:', error);
         alert(`PFP generation failed: ${error.message}`);
+      } finally {
+        isPaymentInProgress = false;
       }
     }
 
