@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1105,6 +1105,10 @@
                   <div class="mascot-option" id="cyberpunk-option">
                     <img src="base-cyberpunk.png" alt="Cyberpunk" class="mascot-icon">
                     <span>Cyberpunk</span>
+                  </div>
+                  <div class="mascot-option" id="pfp-option" style="display: none;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM4QjNCRUQiLz4KPHBhdGggZD0iTTEyIDJMMTQuNSA5SDE5LjVMMTUuNzUgMTMuNUwxNy41IDE5TDEyIDE2TDUuNSAxOUw3LjI1IDEzLjVMMi41IDlINy41TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="PFP" class="mascot-icon">
+                    <span>My PFP</span>
                   </div>
                 </div>
 
@@ -1216,9 +1220,12 @@
     const mascotToggle = document.getElementById('mascot-toggle');
     const mascotOption = document.getElementById('mascot-option');
     const cyberpunkOption = document.getElementById('cyberpunk-option');
+    const pfpOption = document.getElementById('pfp-option');
     let isMascotMode = true; // Default to mascot mode
+    let isPfpMode = false; // PFP mode flag
     let currentBaseImage = 'base.png';
     let currentPromptContext = 'A cute purple hat character with a friendly face, wearing a stylish purple top hat. The character should always maintain the distinctive purple hat while the pose, expression, and clothing can be modified.';
+    let userPfpUrl = null; // Store user's PFP URL
 
     // Character count update and button state
     promptInput.addEventListener('input', () => {
@@ -1236,20 +1243,49 @@
         mascotToggle.classList.remove('active');
         mascotOption.classList.add('active');
         cyberpunkOption.classList.remove('active');
+        pfpOption.classList.remove('active');
         currentBaseImage = 'base.png';
         currentPromptContext = 'A cute purple hat character with a friendly face, wearing a stylish purple top hat. The character should always maintain the distinctive purple hat while the pose, expression, and clothing can be modified.';
+        promptInput.placeholder = "Describe any wild situation... (e.g., 'riding a dragon through neon city')";
+      } else if (isPfpMode) {
+        mascotToggle.classList.add('active');
+        mascotOption.classList.remove('active');
+        cyberpunkOption.classList.remove('active');
+        pfpOption.classList.add('active');
+        currentBaseImage = userPfpUrl || 'base.png'; // Use user's PFP or fallback
+        currentPromptContext = 'Add a stylish purple top hat to this person\'s profile picture. The purple top hat must be prominent and well-integrated with their appearance. Maintain their facial features and overall look while adding the distinctive purple hat. Make it look natural and stylish.';
+        promptInput.placeholder = "Describe the style for your degenified PFP... (e.g., 'cyberpunk style', 'elegant formal look')";
       } else {
         mascotToggle.classList.add('active');
         mascotOption.classList.remove('active');
         cyberpunkOption.classList.add('active');
+        pfpOption.classList.remove('active');
         currentBaseImage = 'base-cyberpunk.png';
         currentPromptContext = 'A cinematic hyper-realistic 3D render of a deep velvet purple top hat with a gold band. The purple top hat must ALWAYS be visible and prominent in the image. Set in a neon cyberpunk atmosphere with rich textures, dramatic lighting, glowing purple energy, cinematic depth of field, futuristic gritty environment, and moody atmosphere. The hat should be the focal point of the composition.';
+        promptInput.placeholder = "Describe any wild situation... (e.g., 'riding a dragon through neon city')";
       }
     }
 
-    // Toggle switch click handler
+    // Toggle switch click handler - cycle through modes
     mascotToggle.addEventListener('click', () => {
-      isMascotMode = !isMascotMode;
+      if (isMascotMode) {
+        isMascotMode = false;
+        isPfpMode = false;
+        // Go to cyberpunk mode
+      } else if (isPfpMode) {
+        isMascotMode = true;
+        isPfpMode = false;
+        // Go back to mascot mode
+      } else {
+        // Currently in cyberpunk mode, check if PFP option is available
+        if (pfpOption.style.display !== 'none') {
+          isMascotMode = false;
+          isPfpMode = true;
+        } else {
+          isMascotMode = true;
+          isPfpMode = false;
+        }
+      }
       updateToggleState();
     });
 
@@ -1257,19 +1293,96 @@
     mascotOption.addEventListener('click', () => {
       if (!isMascotMode) {
         isMascotMode = true;
+        isPfpMode = false;
         updateToggleState();
       }
     });
 
     cyberpunkOption.addEventListener('click', () => {
-      if (isMascotMode) {
+      if (isMascotMode || isPfpMode) {
         isMascotMode = false;
+        isPfpMode = false;
+        updateToggleState();
+      }
+    });
+
+    pfpOption.addEventListener('click', () => {
+      if (!isPfpMode) {
+        isMascotMode = false;
+        isPfpMode = true;
         updateToggleState();
       }
     });
 
     // Initialize toggle state
     updateToggleState();
+
+    // Show/hide PFP option based on miniapp context
+    async function updatePfpVisibility() {
+      try {
+        const context = await window.detectFarcasterContext();
+        if (context.isFarcasterMiniapp) {
+          pfpOption.style.display = 'flex';
+          console.log('✅ PFP option shown - in miniapp context');
+        } else {
+          pfpOption.style.display = 'none';
+          // If currently in PFP mode, switch back to mascot mode
+          if (isPfpMode) {
+            isMascotMode = true;
+            isPfpMode = false;
+            updateToggleState();
+          }
+          console.log('❌ PFP option hidden - not in miniapp context');
+        }
+      } catch (error) {
+        console.log('❌ Error checking miniapp context:', error);
+        pfpOption.style.display = 'none';
+      }
+    }
+
+    // Check PFP visibility on page load and when SDK loads
+    updatePfpVisibility();
+
+    // Fetch user's PFP from Farcaster SDK
+    async function fetchUserPfp() {
+      try {
+        if (window.farcaster && window.farcaster.context) {
+          const context = await window.farcaster.context();
+          console.log('🔍 Farcaster context:', context);
+          
+          // Check if user data is available in context
+          if (context.user && context.user.pfp) {
+            userPfpUrl = context.user.pfp;
+            console.log('✅ User PFP found:', userPfpUrl);
+            return userPfpUrl;
+          } else if (context.user && context.user.pfpUrl) {
+            userPfpUrl = context.user.pfpUrl;
+            console.log('✅ User PFP URL found:', userPfpUrl);
+            return userPfpUrl;
+          } else {
+            console.log('❌ No PFP found in user context');
+            return null;
+          }
+        } else {
+          console.log('❌ Farcaster SDK not available');
+          return null;
+        }
+      } catch (error) {
+        console.log('❌ Error fetching user PFP:', error);
+        return null;
+      }
+    }
+
+    // Try to fetch user PFP when in miniapp context
+    async function initializeUserPfp() {
+      const context = await window.detectFarcasterContext();
+      if (context.isFarcasterMiniapp) {
+        await fetchUserPfp();
+      }
+    }
+
+    // Initialize user PFP
+    initializeUserPfp();
 
     // Example button handlers
     document.querySelectorAll('.example-btn').forEach(btn => {
@@ -1303,14 +1416,22 @@
       resultContainer.style.display = 'none';
 
       try {
-        const response = await fetch('/api/generate', {
+        // Use different endpoint for PFP mode
+        const endpoint = isPfpMode ? '/api/degenify-pfp' : '/api/generate';
+        const requestBody = isPfpMode ? {
+          prompt,
+          pfpUrl: userPfpUrl,
+          promptContext: currentPromptContext
+        } : {
+          prompt,
+          baseImage: currentBaseImage,
+          promptContext: currentPromptContext
+        };
+
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt,
-            baseImage: currentBaseImage,
-            promptContext: currentPromptContext
-          })
+          body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {

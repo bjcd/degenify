@@ -190,6 +190,107 @@ Situation to create: ${prompt}`;
     }
 });
 
+// API endpoint to degenify user's PFP
+app.post('/api/degenify-pfp', async (req, res) => {
+    try {
+        const { prompt, pfpUrl, promptContext } = req.body || {};
+        if (!prompt) return res.status(400).json({ error: 'prompt required' });
+        if (!pfpUrl) return res.status(400).json({ error: 'pfpUrl required' });
+
+        if (!GOOGLE_API_KEY) {
+            return res.status(500).json({ error: 'Google API key not configured' });
+        }
+
+        // Fetch the user's PFP image
+        const pfpResponse = await fetch(pfpUrl);
+        if (!pfpResponse.ok) {
+            return res.status(400).json({ error: 'Failed to fetch PFP image' });
+        }
+        const pfpBuffer = await pfpResponse.arrayBuffer();
+        const pfpBase64 = Buffer.from(pfpBuffer).toString('base64');
+
+        // Determine MIME type based on URL or response headers
+        const contentType = pfpResponse.headers.get('content-type') || 'image/jpeg';
+        const mimeType = contentType.includes('jpeg') || contentType.includes('jpg') ? 'image/jpeg' : 'image/png';
+
+        const url = `${GOOGLE_API_BASE}/v1beta/models/${MODEL_ID}:generateContent`;
+
+        // PFP-specific prompt
+        const enhancedPrompt = `${promptContext}
+
+Instructions:
+1. Use the provided profile picture as the base image
+2. Add a stylish purple top hat to this person
+3. Maintain their facial features and overall appearance
+4. Make the hat look natural and well-integrated
+5. Ensure the hat is prominent but doesn't overpower their face
+6. Keep the same lighting and style as the original photo
+
+Situation to create: ${prompt}`;
+
+        const requestBody = {
+            contents: [
+                {
+                    parts: [
+                        { text: enhancedPrompt },
+                        {
+                            inlineData: {
+                                mimeType: mimeType,
+                                data: pfpBase64,
+                            },
+                        },
+                    ],
+                },
+            ],
+        };
+
+        const aiRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GOOGLE_API_KEY },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!aiRes.ok) {
+            const errorText = await aiRes.text();
+            console.error('Google API error:', errorText);
+            return res.status(500).json({ error: 'Google API error', details: errorText });
+        }
+
+        const aiData = await aiRes.json();
+        if (!aiData.candidates || !aiData.candidates[0] || !aiData.candidates[0].content || !aiData.candidates[0].content.parts || !aiData.candidates[0].content.parts[0] || !aiData.candidates[0].content.parts[0].inlineData) {
+            console.error('Unexpected AI response structure:', JSON.stringify(aiData, null, 2));
+            return res.status(500).json({ error: 'Unexpected AI response structure' });
+        }
+
+        const imgBase64 = aiData.candidates[0].content.parts[0].inlineData.data;
+        const imgBuffer = Buffer.from(imgBase64, 'base64');
+
+        // Upload to Cloudinary
+        const cloudinaryResult = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                { resource_type: 'image', public_id: `pfp_degenified_${Date.now()}` },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            ).end(imgBuffer);
+        });
+
+        // Save to database
+        const imageId = Date.now() + Math.random();
+        await pool.query(
+            'INSERT INTO images (id, prompt, cloudinary_url, cloudinary_public_id) VALUES ($1, $2, $3, $4)',
+            [imageId, `PFP: ${prompt}`, cloudinaryResult.secure_url, cloudinaryResult.public_id]
+        );
+
+        res.setHeader('Content-Type', 'image/png');
+        return res.status(200).send(imgBuffer);
+    } catch (err) {
+        console.error('PFP degenification error:', err);
+        res.status(500).json({ error: 'PFP degenification failed', details: err.message });
+    }
+});
+
 // API endpoint to get all generated images (sorted by newest first)
 app.get('/api/gallery', async (req, res) => {
     try {
