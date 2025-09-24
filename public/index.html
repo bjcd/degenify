@@ -1427,21 +1427,22 @@
 
         console.log('🔍 Getting user FID from miniapp context...');
 
-        // Try to get FID from miniapp context - context is a FUNCTION!
+        // Try to get FID from miniapp context - access as property, not function
         let userFid = null;
         try {
-          // Context is a function that needs to be called!
-          console.log('🔍 Calling sdk.context() to get actual context data...');
-          const context = await sdk.context();
-          console.log('🔍 Context result:', context);
+          // Access context as property, not function
+          console.log('🔍 Accessing sdk.context as property...');
+          const context = sdk.context;
+          console.log('🔍 Context object:', context);
           console.log('🔍 Context type:', typeof context);
-          console.log('🔍 Context keys:', Object.keys(context || {}));
           
+          // Try to access user data from context
           if (context && typeof context === 'object') {
-            // Try different ways to access the user FID
+            console.log('🔍 Context keys:', Object.keys(context));
             console.log('🔍 Checking context.user:', context.user);
             console.log('🔍 Checking context.fid:', context.fid);
             
+            // Try to get FID from user object
             if (context.user && context.user.fid) {
               userFid = context.user.fid;
               console.log('🔍 Found FID in context.user.fid:', userFid);
@@ -1452,10 +1453,10 @@
               console.log('🔍 No FID found in context object');
             }
           } else {
-            console.log('🔍 Context is not a valid object after calling');
+            console.log('🔍 Context is not a valid object');
           }
         } catch (contextError) {
-          console.log('⚠️ Context call failed:', contextError);
+          console.log('⚠️ Context access failed:', contextError);
         }
 
         if (userFid) {
@@ -1483,31 +1484,51 @@
             console.log('⚠️ Server PFP fetch failed:', serverError);
           }
         } else {
-          // Alternative approach: try to get user data via signIn or other SDK methods
+          // Alternative approach: try different methods to get user data
           console.log('🔍 Trying alternative approach - checking for user data in different ways...');
-
+          
           try {
-            // Try to get user data via viewProfile with a known working FID first
-            console.log('🔍 Testing viewProfile with FID 1 to see if it works...');
-            const testProfile = await sdk.actions.viewProfile({ fid: 1 });
-            console.log('🔍 Test profile result:', testProfile);
-
-            // If viewProfile works, maybe we can get current user info differently
-            // Let's try to access the context in a different way
-            console.log('🔍 Trying to access context properties more deeply...');
-            const context = await sdk.context();
-            
-            // Try to access nested properties
-            if (context && typeof context === 'object') {
-              console.log('🔍 Context has user property:', 'user' in context);
-              console.log('🔍 Context has fid property:', 'fid' in context);
+            // Method 1: Try signIn to get user data
+            console.log('🔍 Trying signIn to get user data...');
+            try {
+              const signInResult = await sdk.actions.signIn();
+              console.log('🔍 SignIn result:', signInResult);
               
-              // Try to access properties that might contain user info
-              for (const key in context) {
-                console.log(`🔍 Context.${key}:`, context[key]);
+              // After signIn, try to access context again
+              const contextAfterSignIn = sdk.context;
+              console.log('🔍 Context after signIn:', contextAfterSignIn);
+              
+              if (contextAfterSignIn && contextAfterSignIn.user && contextAfterSignIn.user.fid) {
+                userFid = contextAfterSignIn.user.fid;
+                console.log('🔍 Found FID after signIn:', userFid);
+              }
+            } catch (signInError) {
+              console.log('⚠️ SignIn failed:', signInError);
+            }
+            
+            // Method 2: Try to get user data via viewProfile with a known working FID
+            if (!userFid) {
+              console.log('🔍 Testing viewProfile with FID 1 to see if it works...');
+              const testProfile = await sdk.actions.viewProfile({ fid: 1 });
+              console.log('🔍 Test profile result:', testProfile);
+            }
+            
+            // Method 3: Try to access context properties more deeply
+            if (!userFid) {
+              console.log('🔍 Trying to access context properties more deeply...');
+              const context = sdk.context;
+              
+              if (context && typeof context === 'object') {
+                console.log('🔍 Context has user property:', 'user' in context);
+                console.log('🔍 Context has fid property:', 'fid' in context);
+                
+                // Try to access properties that might contain user info
+                for (const key in context) {
+                  console.log(`🔍 Context.${key}:`, context[key]);
+                }
               }
             }
-
+            
           } catch (altError) {
             console.log('⚠️ Alternative approach failed:', altError);
           }
