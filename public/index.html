@@ -1167,15 +1167,15 @@
         width: 95%;
         margin: 20px;
       }
-      
+
       .payment-header {
         padding: 16px 20px;
       }
-      
+
       .payment-body {
         padding: 20px;
       }
-      
+
       .cost-amount {
         font-size: 1.75rem;
       }
@@ -1205,7 +1205,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1898,68 +1898,70 @@
     async function handlePayment() {
       try {
         console.log('💰 Starting payment flow...');
-        
+
         // Get user's wallet address via signIn
         const sdk = await getSdk();
-        const signInResult = await sdk.actions.signIn({ 
+        const signInResult = await sdk.actions.signIn({
           nonce: `degenify-payment-${Date.now()}`,
           acceptAuthAddress: true
         });
-        
+
         if (!signInResult || !signInResult.message) {
           throw new Error('Failed to get wallet address');
         }
-        
+
         // Extract wallet address from signIn message
         const addressMatch = signInResult.message.match(/0x[a-fA-F0-9]{40}/);
         if (!addressMatch) {
           throw new Error('Could not extract wallet address');
         }
-        
+
         const fromAddress = addressMatch[0].toLowerCase();
         console.log('🔍 User wallet address:', fromAddress);
-        
-        // Trigger sendToken for 50 DEGEN
-        const DEGEN_CONTRACT = '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed';
+
+        // Trigger sendToken for 50 DEGEN using correct Farcaster SDK format
+        const DEGEN_CAIP19 = 'eip155:8453/erc20:0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed';
         const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488';
+        const DEGEN_AMOUNT = '50000000000000000000'; // 50 DEGEN with 18 decimals
         
-        console.log('🔍 Calling sendToken...');
+        console.log('🔍 Calling sendToken with correct SDK format...');
         const paymentResult = await sdk.actions.sendToken({
-          to: TREASURY_ADDRESS,
-          tokenAddress: DEGEN_CONTRACT,
-          amount: '50'
+          token: DEGEN_CAIP19,
+          amount: DEGEN_AMOUNT,
+          recipientAddress: TREASURY_ADDRESS
         });
-        
-        if (!paymentResult || !paymentResult.txHash) {
-          throw new Error('Payment failed or was cancelled');
+
+        if (!paymentResult || !paymentResult.success) {
+          throw new Error(`Payment failed: ${paymentResult.reason || 'Unknown error'}`);
         }
         
-        console.log('✅ Payment successful, txHash:', paymentResult.txHash);
-        
+        const txHash = paymentResult.send.transaction;
+        console.log('✅ Payment successful, txHash:', txHash);
+
         // Verify payment on server
         console.log('🔍 Verifying payment...');
         const verificationResponse = await fetch('/api/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            txHash: paymentResult.txHash,
+            txHash: txHash,
             fromAddress: fromAddress,
             expectedAmount: '50'
           })
         });
-        
+
         const verification = await verificationResponse.json();
-        
+
         if (!verification.valid) {
           throw new Error(`Payment verification failed: ${verification.error}`);
         }
-        
+
         console.log('✅ Payment verified successfully!');
-        
+
         // Hide payment modal and proceed with generation
         hidePaymentModal();
         await performGeneration(promptInput.value.trim());
-        
+
       } catch (error) {
         console.error('Payment error:', error);
         alert(`Payment failed: ${error.message}`);
