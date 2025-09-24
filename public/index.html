@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1397,6 +1397,18 @@
       }
     }
 
+    // Extract value from Proxy function safely
+    function extractValue(proxyFunction) {
+      try {
+        if (typeof proxyFunction === 'function') {
+          return proxyFunction();
+        }
+        return proxyFunction;
+      } catch {
+        return null;
+      }
+    }
+
     // Simple PFP fetching for miniapps using official SDK approach
     async function getPfpUrl() {
       try {
@@ -1410,16 +1422,19 @@
 
         console.log('🔍 Getting PFP from miniapp context...');
 
-        // According to Farcaster SDK docs, context should be accessed directly
         // Wait a bit for context to be fully populated
         await new Promise(resolve => setTimeout(resolve, 100));
         
         const context = sdk.context;
         console.log('🔍 Raw context:', context);
         
-        // Try direct access to user.pfpUrl as per SDK docs
-        if (context && context.user && context.user.pfpUrl) {
-          const pfpUrl = context.user.pfpUrl;
+        // Extract user object from Proxy function
+        const user = extractValue(context?.user);
+        console.log('🔍 Extracted user:', user);
+        
+        // Try to get pfpUrl from extracted user
+        if (user && user.pfpUrl) {
+          const pfpUrl = extractValue(user.pfpUrl);
           if (typeof pfpUrl === 'string' && pfpUrl.length > 0) {
             userPfpUrl = pfpUrl;
             console.log('✅ User PFP URL from direct access:', userPfpUrl);
@@ -1430,8 +1445,8 @@
         // If direct access fails, try to get the current user's FID and use viewProfile
         try {
           console.log('🔍 Trying to get current user FID...');
-          const currentUserFid = context?.user?.fid;
-          if (currentUserFid) {
+          const currentUserFid = extractValue(user?.fid);
+          if (currentUserFid && typeof currentUserFid === 'number') {
             console.log('🔍 Using current user FID:', currentUserFid);
             const profile = await sdk.actions.viewProfile({ fid: currentUserFid });
             if (profile && profile.user && profile.user.pfpUrl) {
