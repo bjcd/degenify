@@ -1461,7 +1461,7 @@
             if (fidMatch) {
               const fid = fidMatch[1]; // Keep as string for API call
               console.log('🔍 Extracted FID:', fid);
-              
+
               // Get PFP URL from our server using the FID
               console.log('🔍 Fetching PFP from server for FID:', fid);
               const pfpResponse = await fetch('/api/fc-pfp', {
@@ -1469,12 +1469,12 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fid })
               });
-              
+
               if (pfpResponse.ok) {
                 const pfpData = await pfpResponse.json();
                 const pfpUrl = pfpData.pfpUrl;
                 console.log('✅ Got PFP URL from server:', pfpUrl);
-                
+
                 if (pfpUrl) {
                   // Create a mock viewer object with the PFP URL
                   viewer = { pfpUrl: pfpUrl };

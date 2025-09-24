@@ -357,21 +357,31 @@ app.post('/api/fc-pfp', async (req, res) => {
         }
 
         console.log(`🔍 Fetching PFP for FID: ${fid}`);
+        console.log(`🔍 API Key present: ${process.env.NEYNAR_API_KEY ? 'Yes' : 'No'}`);
 
-        // Use Neynar API to get user data by FID
-        const neynarResponse = await fetch(`https://api.neynar.com/v2/farcaster/user?fid=${fid}`, {
-            headers: {
-                'api_key': process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS'
+        // Use correct Neynar API endpoint and headers
+        const url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${encodeURIComponent(fid)}`;
+        console.log(`🔍 Neynar URL: ${url}`);
+        
+        const neynarResponse = await fetch(url, {
+            method: 'GET',
+            headers: { 
+                'x-api-key': process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS',
+                'accept': 'application/json'
             }
         });
 
         if (!neynarResponse.ok) {
-            console.error('Neynar API error:', neynarResponse.status, neynarResponse.statusText);
-            return res.status(502).json({ error: 'Failed to fetch user data from Neynar' });
+            const text = await neynarResponse.text();
+            console.error('Neynar API error:', neynarResponse.status, text);
+            return res.status(502).json({ error: `Neynar ${neynarResponse.status}`, detail: text });
         }
 
-        const userData = await neynarResponse.json();
-        const pfpUrl = userData.result?.user?.pfp_url || userData.result?.user?.pfp?.url || null;
+        const data = await neynarResponse.json();
+        console.log('🔍 Neynar response:', JSON.stringify(data, null, 2));
+        
+        const user = data?.users?.[0];
+        const pfpUrl = user?.pfp_url || user?.profile?.pfp_url || null;
 
         if (!pfpUrl) {
             console.log(`No PFP found for FID: ${fid}`);
