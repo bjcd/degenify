@@ -1319,13 +1319,16 @@
     // Initialize toggle state
     updateToggleState();
 
-    // Show/hide PFP option based on miniapp context
+    // Show/hide PFP option based on miniapp context - use same logic as Add to Home Screen button
     async function updatePfpVisibility() {
       try {
         const context = await window.detectFarcasterContext();
-        if (context.isFarcasterMiniapp) {
+        console.log('🔍 PFP context check:', context);
+        
+        // Use exact same logic as Add to Home Screen button
+        if (context.isFarcasterMiniapp && context.shouldShowButton) {
           pfpOption.style.display = 'flex';
-          console.log('✅ PFP option shown - in miniapp context');
+          console.log('✅ PFP option shown - in miniapp context with proper SDK');
         } else {
           pfpOption.style.display = 'none';
           // If currently in PFP mode, switch back to mascot mode
@@ -1334,7 +1337,7 @@
             isPfpMode = false;
             updateToggleState();
           }
-          console.log('❌ PFP option hidden - not in miniapp context');
+          console.log('❌ PFP option hidden - not in miniapp context or SDK not ready');
         }
       } catch (error) {
         console.log('❌ Error checking miniapp context:', error);
@@ -1375,10 +1378,10 @@
       }
     }
 
-    // Try to fetch user PFP when in miniapp context
+    // Try to fetch user PFP when in miniapp context - use same logic as Add to Home Screen button
     async function initializeUserPfp() {
       const context = await window.detectFarcasterContext();
-      if (context.isFarcasterMiniapp) {
+      if (context.isFarcasterMiniapp && context.shouldShowButton) {
         const pfp = await fetchUserPfp();
         if (!pfp) {
           console.log('❌ Could not fetch user PFP from Farcaster SDK');
