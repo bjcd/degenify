@@ -1432,13 +1432,26 @@
         try {
           // Try to access context properties safely
           const context = sdk.context;
+          console.log('🔍 Raw context object:', context);
+          console.log('🔍 Context type:', typeof context);
+          console.log('🔍 Context keys:', Object.keys(context || {}));
+          
           if (context && typeof context === 'object') {
             // Try different ways to access the user FID
+            console.log('🔍 Checking context.user:', context.user);
+            console.log('🔍 Checking context.fid:', context.fid);
+            
             if (context.user && context.user.fid) {
               userFid = context.user.fid;
+              console.log('🔍 Found FID in context.user.fid:', userFid);
             } else if (context.fid) {
               userFid = context.fid;
+              console.log('🔍 Found FID in context.fid:', userFid);
+            } else {
+              console.log('🔍 No FID found in context object');
             }
+          } else {
+            console.log('🔍 Context is not a valid object');
           }
         } catch (contextError) {
           console.log('⚠️ Context access failed:', contextError);
@@ -1467,6 +1480,35 @@
             }
           } catch (serverError) {
             console.log('⚠️ Server PFP fetch failed:', serverError);
+          }
+        } else {
+          // Alternative approach: try to get user data via signIn or other SDK methods
+          console.log('🔍 Trying alternative approach - checking for user data in different ways...');
+          
+          try {
+            // Try to get user data via viewProfile with a known working FID first
+            console.log('🔍 Testing viewProfile with FID 1 to see if it works...');
+            const testProfile = await sdk.actions.viewProfile({ fid: 1 });
+            console.log('🔍 Test profile result:', testProfile);
+            
+            // If viewProfile works, maybe we can get current user info differently
+            // Let's try to access the context in a different way
+            console.log('🔍 Trying to access context properties more deeply...');
+            const context = sdk.context;
+            
+            // Try to access nested properties
+            if (context && typeof context === 'object') {
+              console.log('🔍 Context has user property:', 'user' in context);
+              console.log('🔍 Context has fid property:', 'fid' in context);
+              
+              // Try to access properties that might contain user info
+              for (const key in context) {
+                console.log(`🔍 Context.${key}:`, context[key]);
+              }
+            }
+            
+          } catch (altError) {
+            console.log('⚠️ Alternative approach failed:', altError);
           }
         }
 
