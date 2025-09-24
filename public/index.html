@@ -205,6 +205,87 @@
       transform: scale(1.05);
     }
 
+    /* Mascot Toggle Switch */
+    .mascot-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: hsl(var(--card) / 0.6);
+      backdrop-filter: blur(4px);
+      border: 1px solid hsl(var(--border) / 0.3);
+      border-radius: 1rem;
+      transition: var(--transition-smooth);
+    }
+
+    .mascot-toggle:hover {
+      background: hsl(var(--card) / 0.8);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mascot-label {
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      font-size: 1.1rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 60px;
+      height: 32px;
+      background: hsl(var(--muted));
+      border-radius: 16px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      border: 2px solid hsl(var(--border) / 0.3);
+    }
+
+    .toggle-switch.active {
+      background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+      border-color: hsl(var(--primary));
+      box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: var(--transition-smooth);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-switch.active .toggle-slider {
+      transform: translateX(28px);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .mascot-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: hsl(var(--muted-foreground));
+      transition: var(--transition-smooth);
+    }
+
+    .mascot-option.active {
+      color: hsl(var(--primary));
+      font-weight: 600;
+    }
+
+    .mascot-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+
     /* Enhanced input styles */
     .input-degenify {
       width: 100%;
@@ -903,6 +984,21 @@
             <div class="card-degenify relative overflow-hidden">
               <div class="absolute inset-0 opacity-30"></div>
               <div class="relative space-y-6">
+                <!-- Mascot Toggle Switch -->
+                <div class="mascot-toggle">
+                  <div class="mascot-option active" id="mascot-option">
+                    <img src="base.png" alt="Mascot" class="mascot-icon">
+                    <span>Mascot</span>
+                  </div>
+                  <div class="toggle-switch" id="mascot-toggle">
+                    <div class="toggle-slider"></div>
+                  </div>
+                  <div class="mascot-option" id="cyberpunk-option">
+                    <img src="base-2.jpeg" alt="Cyberpunk" class="mascot-icon">
+                    <span>Cyberpunk</span>
+                  </div>
+                </div>
+
                 <div class="space-y-4">
                   <textarea id="prompt"
                     placeholder="Describe any wild situation... (e.g., 'riding a dragon through neon city')"
@@ -1010,6 +1106,14 @@
     const resultImage = document.getElementById('result-image');
     const gallery = document.getElementById('gallery');
 
+    // Mascot toggle variables
+    const mascotToggle = document.getElementById('mascot-toggle');
+    const mascotOption = document.getElementById('mascot-option');
+    const cyberpunkOption = document.getElementById('cyberpunk-option');
+    let isMascotMode = true; // Default to mascot mode
+    let currentBaseImage = 'base.png';
+    let currentPromptContext = 'A cute purple hat character with a friendly face, wearing a stylish purple top hat. The character should always maintain the distinctive purple hat while the pose, expression, and clothing can be modified.';
+
     // Character count update and button state
     promptInput.addEventListener('input', () => {
       const count = promptInput.value.length;
@@ -1019,6 +1123,32 @@
       generateBtn.disabled = count === 0;
       console.log('Input changed, count:', count, 'disabled:', generateBtn.disabled);
     });
+
+    // Mascot toggle functionality
+    function updateToggleState() {
+      if (isMascotMode) {
+        mascotToggle.classList.remove('active');
+        mascotOption.classList.add('active');
+        cyberpunkOption.classList.remove('active');
+        currentBaseImage = 'base.png';
+        currentPromptContext = 'A cute purple hat character with a friendly face, wearing a stylish purple top hat. The character should always maintain the distinctive purple hat while the pose, expression, and clothing can be modified.';
+      } else {
+        mascotToggle.classList.add('active');
+        mascotOption.classList.remove('active');
+        cyberpunkOption.classList.add('active');
+        currentBaseImage = 'base-2.jpeg';
+        currentPromptContext = 'A cinematic hyper-realistic 3D render of a deep velvet purple top hat with a gold band, set in a neon cyberpunk atmosphere. Rich textures, dramatic lighting, glowing purple energy, cinematic depth of field, futuristic gritty environment, moody atmosphere.';
+      }
+    }
+
+    // Toggle switch click handler
+    mascotToggle.addEventListener('click', () => {
+      isMascotMode = !isMascotMode;
+      updateToggleState();
+    });
+
+    // Initialize toggle state
+    updateToggleState();
 
     // Example button handlers
     document.querySelectorAll('.example-btn').forEach(btn => {
@@ -1055,7 +1185,11 @@
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({
+            prompt,
+            baseImage: currentBaseImage,
+            promptContext: currentPromptContext
+          })
         });
 
         if (!response.ok) {

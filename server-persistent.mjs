@@ -13,35 +13,35 @@ const __dirname = path.dirname(__filename);
 const app = express();
 // Serve Farcaster Mini App manifest (must be before static middleware)
 app.get('/.well-known/farcaster.json', (req, res) => {
-  // Add cache-busting headers to force refresh
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('ETag', `"manifest-${Date.now()}"`);
-  
-  try {
-    // Read and serve the actual file content
-    const filePath = path.join(__dirname, 'public', '.well-known', 'farcaster.json');
-    console.log('Serving farcaster.json from:', filePath);
-    
-    // Check if file exists first
-    if (!fs.existsSync(filePath)) {
-      console.error('farcaster.json not found at:', filePath);
-      return res.status(404).json({ error: 'Manifest not found' });
+    // Add cache-busting headers to force refresh
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"manifest-${Date.now()}"`);
+
+    try {
+        // Read and serve the actual file content
+        const filePath = path.join(__dirname, 'public', '.well-known', 'farcaster.json');
+        console.log('Serving farcaster.json from:', filePath);
+
+        // Check if file exists first
+        if (!fs.existsSync(filePath)) {
+            console.error('farcaster.json not found at:', filePath);
+            return res.status(404).json({ error: 'Manifest not found' });
+        }
+
+        const manifestContent = fs.readFileSync(filePath, 'utf8');
+        const manifest = JSON.parse(manifestContent);
+
+        // Add a timestamp to help with debugging
+        console.log(`Served manifest version ${manifest.frame?.version} at ${new Date().toISOString()}`);
+
+        res.json(manifest);
+    } catch (error) {
+        console.error('Error serving farcaster.json:', error);
+        res.status(500).json({ error: 'Failed to load manifest' });
     }
-    
-    const manifestContent = fs.readFileSync(filePath, 'utf8');
-    const manifest = JSON.parse(manifestContent);
-    
-    // Add a timestamp to help with debugging
-    console.log(`Served manifest version ${manifest.frame?.version} at ${new Date().toISOString()}`);
-    
-    res.json(manifest);
-  } catch (error) {
-    console.error('Error serving farcaster.json:', error);
-    res.status(500).json({ error: 'Failed to load manifest' });
-  }
 });
 
 app.use(express.json({ limit: '1mb' }));
@@ -92,12 +92,16 @@ initDatabase();
 
 app.post('/api/generate', async (req, res) => {
     try {
-        const { prompt } = req.body || {};
+        const { prompt, baseImage: baseImageName = 'base.png', promptContext } = req.body || {};
         if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
-        const basePath = path.join(__dirname, BASE_IMAGE_PATH);
-        if (!fs.existsSync(basePath)) return res.status(400).json({ error: 'Base image missing at ' + BASE_IMAGE_PATH });
+        // Determine the base image path based on the toggle
+        const basePath = path.join(__dirname, 'public', baseImageName);
+        if (!fs.existsSync(basePath)) return res.status(400).json({ error: 'Base image missing at ' + basePath });
         const baseImage = fs.readFileSync(basePath);
+
+        // Determine MIME type based on file extension
+        const mimeType = baseImageName.endsWith('.jpeg') || baseImageName.endsWith('.jpg') ? 'image/jpeg' : 'image/png';
 
         if (!GOOGLE_API_KEY) {
             res.setHeader('Content-Type', 'image/png');
@@ -106,16 +110,15 @@ app.post('/api/generate', async (req, res) => {
 
         const url = `${GOOGLE_API_BASE}/v1beta/models/${MODEL_ID}:generateContent`;
 
-        // Enhanced prompt to ensure purple hat preservation
-        const enhancedPrompt = `You are an image editor. You must ALWAYS preserve the purple hat from the base image character. 
-        
+        // Enhanced prompt using dynamic context
+        const enhancedPrompt = `${promptContext}
+
 Instructions:
-1. Keep the distinctive PURPLE HAT from the base image character
-2. The character can change poses, expressions, and clothing to fit the situation
-3. The character can be dressed differently for the new context
-4. Only modify the background, setting, or environment around the character
-5. Place the character in the new situation described: ${prompt}
-6. The purple hat must remain visible and distinctive
+1. Use the base image as reference for the character/object
+2. Modify the character/object to fit the situation described: ${prompt}
+3. Maintain the core visual elements from the base image
+4. Place the character/object in the new situation described: ${prompt}
+5. Ensure the result is visually appealing and matches the prompt
 
 Situation to create: ${prompt}`;
 
@@ -126,7 +129,7 @@ Situation to create: ${prompt}`;
                         { text: enhancedPrompt },
                         {
                             inlineData: {
-                                mimeType: 'image/png',
+                                mimeType: mimeType,
                                 data: baseImage.toString('base64'),
                             },
                         },
@@ -246,7 +249,7 @@ app.get('/api/share/:id', async (req, res) => {
         const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${imageId}`;
         // Add cache-busting parameter to force Farcaster to refresh image cache
         const cloudinaryUrl = `${image.cloudinary_url}?t=${Date.now()}`;
-        
+
         const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -876,7 +879,7 @@ app.get('/api/download/:id', async (req, res) => {
         res.setHeader('Content-Type', 'image/png');
         res.setHeader('Content-Disposition', `attachment; filename="meme-${imageId}.png"`);
         res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
-        
+
         // Stream the image data directly to the response
         const buffer = Buffer.from(await response.arrayBuffer());
         res.send(buffer);
