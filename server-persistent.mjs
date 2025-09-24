@@ -362,10 +362,10 @@ app.post('/api/fc-pfp', async (req, res) => {
         // Use correct Neynar API endpoint and headers
         const url = `https://api.neynar.com/v2/farcaster/user/bulk?fids=${encodeURIComponent(fid)}`;
         console.log(`🔍 Neynar URL: ${url}`);
-        
+
         const neynarResponse = await fetch(url, {
             method: 'GET',
-            headers: { 
+            headers: {
                 'x-api-key': process.env.NEYNAR_API_KEY || 'NEYNAR_API_DOCS',
                 'accept': 'application/json'
             }
@@ -379,7 +379,7 @@ app.post('/api/fc-pfp', async (req, res) => {
 
         const data = await neynarResponse.json();
         console.log('🔍 Neynar response:', JSON.stringify(data, null, 2));
-        
+
         const user = data?.users?.[0];
         const pfpUrl = user?.pfp_url || user?.profile?.pfp_url || null;
 

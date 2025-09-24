@@ -219,6 +219,13 @@
       border-radius: 1rem;
       transition: var(--transition-smooth);
     }
+    
+    /* Hide toggle switch in miniapp, show only clickable squares */
+    @media (max-width: 768px) {
+      .mascot-toggle {
+        display: none;
+      }
+    }
 
     .mascot-toggle:hover {
       background: hsl(var(--card) / 0.8);
@@ -1268,8 +1275,13 @@
       }
     }
 
-    // Toggle switch click handler - cycle through modes
+    // Toggle switch click handler - cycle through modes (desktop only)
     mascotToggle.addEventListener('click', () => {
+      // Only work on desktop, not in miniapp
+      if (window.location !== window.parent.location) {
+        return; // Skip in miniapp
+      }
+      
       if (isMascotMode) {
         isMascotMode = false;
         isPfpMode = false;
