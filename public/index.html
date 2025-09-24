@@ -1660,6 +1660,12 @@
           body: JSON.stringify(requestBody)
         });
 
+        console.log('🔍 Response status:', response.status);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('❌ Server error response:', errorText);
+        }
+
         if (!response.ok) {
           const error = await response.json().catch(() => ({ error: 'Failed' }));
           throw new Error(error.error || response.status);
