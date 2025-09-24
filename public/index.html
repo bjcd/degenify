@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1414,7 +1414,7 @@
       }
     }
 
-    // SIMPLE PFP fetching - just use a placeholder for now
+    // Get user's PFP from miniapp viewer context
     async function getPfpUrl() {
       try {
         const sdk = await getSdk();
@@ -1425,12 +1425,57 @@
           return null;
         }
 
-        console.log('🔍 Using placeholder PFP for now...');
+        console.log('🔍 Getting user PFP from miniapp viewer context...');
 
-        // For now, let's just use a placeholder PFP URL
-        // This will allow us to test the PFP degenification feature
+        // Try to get viewer context - this should contain the user's PFP
+        try {
+          // Access the viewer context directly
+          const context = sdk.context;
+          console.log('🔍 Raw context:', context);
+          
+          // Try to access viewer data
+          if (context && context.viewer && context.viewer.pfpUrl) {
+            const pfpUrl = context.viewer.pfpUrl;
+            console.log('✅ Found PFP in context.viewer.pfpUrl:', pfpUrl);
+            userPfpUrl = pfpUrl;
+            return userPfpUrl;
+          }
+          
+          // Try alternative paths
+          if (context && context.user && context.user.pfpUrl) {
+            const pfpUrl = context.user.pfpUrl;
+            console.log('✅ Found PFP in context.user.pfpUrl:', pfpUrl);
+            userPfpUrl = pfpUrl;
+            return userPfpUrl;
+          }
+          
+          console.log('🔍 No PFP found in context, trying to call context...');
+          
+          // Try calling context as function
+          const contextResult = await sdk.context();
+          console.log('🔍 Context result:', contextResult);
+          
+          if (contextResult && contextResult.viewer && contextResult.viewer.pfpUrl) {
+            const pfpUrl = contextResult.viewer.pfpUrl;
+            console.log('✅ Found PFP in context().viewer.pfpUrl:', pfpUrl);
+            userPfpUrl = pfpUrl;
+            return userPfpUrl;
+          }
+          
+          if (contextResult && contextResult.user && contextResult.user.pfpUrl) {
+            const pfpUrl = contextResult.user.pfpUrl;
+            console.log('✅ Found PFP in context().user.pfpUrl:', pfpUrl);
+            userPfpUrl = pfpUrl;
+            return userPfpUrl;
+          }
+          
+        } catch (contextError) {
+          console.log('⚠️ Context access failed:', contextError);
+        }
+
+        // Fallback: use placeholder for testing
+        console.log('🔍 Using placeholder PFP as fallback...');
         const placeholderPfpUrl = 'https://picsum.photos/400/400?random=1';
-
         console.log('✅ Using placeholder PFP URL:', placeholderPfpUrl);
         userPfpUrl = placeholderPfpUrl;
         return userPfpUrl;
