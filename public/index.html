@@ -1377,59 +1377,53 @@
     updatePfpVisibility();
 
 
-    // Fetch user's PFP from Farcaster context directly
+    // Fetch user's PFP using viewProfile action directly
     async function fetchUserPfp() {
       try {
-        if (window.farcaster && window.farcaster.context) {
-          // Get the user's FID from context
-          const context = await window.farcaster.context();
-          console.log('🔍 Farcaster context:', context);
-
-          if (context.user && context.user.fid) {
-            const fid = context.user.fid;
-            console.log('🔍 User FID:', fid);
-
-            // Try to get PFP URL directly from context first
-            if (context.user.pfpUrl) {
-              userPfpUrl = context.user.pfpUrl;
-              console.log('✅ User PFP URL from context:', userPfpUrl);
+        if (window.farcaster && window.farcaster.actions && window.farcaster.actions.viewProfile) {
+          console.log('🔍 Trying to get user profile using viewProfile action...');
+          
+          // Try to get the current user's profile using viewProfile
+          // We'll try with a common FID first, or use the action without parameters
+          try {
+            // First, let's try to get the profile without specifying a FID (current user)
+            const profile = await window.farcaster.actions.viewProfile();
+            console.log('🔍 Profile from viewProfile (no FID):', profile);
+            
+            if (profile && profile.user && profile.user.pfpUrl) {
+              userPfpUrl = profile.user.pfpUrl;
+              console.log('✅ User PFP URL from viewProfile:', userPfpUrl);
               return userPfpUrl;
             }
-
-            // If not in context, try to query Farcaster Hub API directly
-            try {
-              const hubUrl = 'https://hub-api.neynar.com'; // Use Neynar's public hub
-              const response = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`);
-
-              if (response.ok) {
-                const data = await response.json();
-                console.log('🔍 Hub API response:', data);
-
-                if (data.messages && data.messages.length > 0) {
-                  // Look for pfp data in the messages
-                  const pfpMessage = data.messages.find(msg =>
-                    msg.data && msg.data.userDataBody && msg.data.userDataBody.type === 'USER_DATA_TYPE_PFP'
-                  );
-
-                  if (pfpMessage && pfpMessage.data.userDataBody.value) {
-                    userPfpUrl = pfpMessage.data.userDataBody.value;
-                    console.log('✅ User PFP URL from Hub API:', userPfpUrl);
-                    return userPfpUrl;
-                  }
-                }
-              }
-            } catch (hubError) {
-              console.log('❌ Hub API error:', hubError);
-            }
-
-            console.log('❌ No pfpUrl found in context or Hub API');
-            return null;
-          } else {
-            console.log('❌ No user FID found in context');
-            return null;
+          } catch (viewProfileError) {
+            console.log('❌ viewProfile without FID failed:', viewProfileError);
           }
+          
+          // If that doesn't work, try to get FID from URL or other sources
+          try {
+            // Check if we can get FID from the URL or other sources
+            const urlParams = new URLSearchParams(window.location.search);
+            const fidFromUrl = urlParams.get('fid');
+            
+            if (fidFromUrl) {
+              console.log('🔍 FID from URL:', fidFromUrl);
+              const profile = await window.farcaster.actions.viewProfile({ fid: parseInt(fidFromUrl) });
+              console.log('🔍 Profile from viewProfile (FID from URL):', profile);
+              
+              if (profile && profile.user && profile.user.pfpUrl) {
+                userPfpUrl = profile.user.pfpUrl;
+                console.log('✅ User PFP URL from viewProfile (FID from URL):', userPfpUrl);
+                return userPfpUrl;
+              }
+            }
+          } catch (urlFidError) {
+            console.log('❌ viewProfile with FID from URL failed:', urlFidError);
+          }
+          
+          console.log('❌ Could not get PFP from viewProfile action');
+          return null;
         } else {
-          console.log('❌ Farcaster SDK not available');
+          console.log('❌ Farcaster SDK or viewProfile action not available');
           return null;
         }
       } catch (error) {
