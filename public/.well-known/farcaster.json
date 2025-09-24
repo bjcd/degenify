@@ -4,7 +4,7 @@
         "version": "1",
         "iconUrl": "https://www.degenify.xyz/miniapp-icon.png",
         "homeUrl": "https://www.degenify.xyz",
-        "imageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+        "imageUrl": "https://www.degenify.xyz/miniapp-icon-large.png",
         "buttonTitle": "Open mini app",
         "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
         "splashBackgroundColor": "#e8d3f4",
