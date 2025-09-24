@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { fetch } from 'undici';
 import { Pool } from 'pg';
 import { v2 as cloudinary } from 'cloudinary';
+import { ethers } from 'ethers';
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -55,6 +56,20 @@ if (MODEL_ID === 'gemini-2.5-flash-image') {
 }
 const BASE_IMAGE_PATH = process.env.BASE_IMAGE_PATH || 'public/base.png';
 const GOOGLE_API_BASE = process.env.GOOGLE_API_BASE || 'https://generativelanguage.googleapis.com';
+
+// Payment verification constants
+const DEGEN_CONTRACT = '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed'.toLowerCase();
+const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488'.toLowerCase();
+const DEGEN_COST = '50'; // 50 DEGEN tokens
+const BASE_RPC_URL = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+
+// Initialize Base provider
+const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
+
+// ERC-20 Transfer event interface
+const ERC20_IFACE = new ethers.Interface([
+  'event Transfer(address indexed from, address indexed to, uint256 value)'
+]);
 
 // Configure Cloudinary
 cloudinary.config({
@@ -1105,6 +1120,88 @@ app.get('/api/download/:id', async (req, res) => {
     } catch (err) {
         console.error('Download error:', err);
         res.status(500).json({ error: 'Download failed' });
+    }
+});
+
+// Payment verification endpoint
+app.post('/api/verify-payment', async (req, res) => {
+    try {
+        console.log('🔍 Payment verification request:', req.body);
+        
+        const { txHash, fromAddress, expectedAmount } = req.body || {};
+        
+        if (!txHash || !fromAddress || !expectedAmount) {
+            console.log('❌ Missing payment parameters');
+            return res.status(400).json({ valid: false, error: 'Missing parameters' });
+        }
+
+        console.log(`🔍 Verifying transaction: ${txHash} from ${fromAddress} for ${expectedAmount} DEGEN`);
+
+        // Get transaction receipt
+        const tx = await provider.getTransactionReceipt(txHash);
+        if (!tx || tx.status !== 1) {
+            console.log('❌ Transaction not confirmed or failed');
+            return res.status(200).json({ valid: false, error: 'Transaction not confirmed or failed' });
+        }
+
+        console.log('✅ Transaction confirmed, checking logs...');
+
+        // Check if transaction is on Base (chainId 8453)
+        if (tx.chainId !== 8453n) {
+            console.log('❌ Transaction not on Base network');
+            return res.status(200).json({ valid: false, error: 'Transaction not on Base network' });
+        }
+
+        // Find DEGEN Transfer events in transaction logs
+        const logs = tx.logs
+            .filter(l => (l.address || "").toLowerCase() === DEGEN_CONTRACT)
+            .map(l => {
+                try { 
+                    return ERC20_IFACE.parseLog(l); 
+                } catch (e) { 
+                    console.log('Failed to parse log:', e.message);
+                    return null; 
+                }
+            })
+            .filter(Boolean);
+
+        console.log(`🔍 Found ${logs.length} DEGEN Transfer events`);
+
+        // Look for Transfer to our treasury from the specified address
+        const match = logs.find((ev) => {
+            if (ev?.name !== 'Transfer') return false;
+            
+            const to = ev.args?.to?.toLowerCase();
+            const from = ev.args?.from?.toLowerCase();
+            
+            console.log(`🔍 Checking Transfer: from ${from} to ${to}`);
+            console.log(`🔍 Expected: from ${fromAddress.toLowerCase()} to ${TREASURY_ADDRESS}`);
+            
+            return to === TREASURY_ADDRESS && from === fromAddress.toLowerCase();
+        });
+
+        if (!match) {
+            console.log('❌ No matching DEGEN Transfer found');
+            return res.status(200).json({ valid: false, error: 'No matching DEGEN Transfer found' });
+        }
+
+        // Check amount
+        const paid = match.args.value;
+        const required = ethers.parseUnits(expectedAmount, 18);
+        
+        console.log(`🔍 Paid: ${paid.toString()}, Required: ${required.toString()}`);
+        
+        if (paid < required) {
+            console.log('❌ Insufficient payment amount');
+            return res.status(200).json({ valid: false, error: 'Insufficient payment amount' });
+        }
+
+        console.log('✅ Payment verified successfully!');
+        res.status(200).json({ valid: true, amount: ethers.formatUnits(paid, 18) });
+
+    } catch (err) {
+        console.error('Payment verification error:', err);
+        res.status(500).json({ valid: false, error: err.message });
     }
 });
 

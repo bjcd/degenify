@@ -1052,6 +1052,134 @@
       font-size: 0.875rem;
       margin: 0;
     }
+
+    /* Payment Modal Styles */
+    .payment-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .payment-content {
+      background: hsl(var(--background));
+      border-radius: 16px;
+      padding: 0;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      border: 1px solid hsl(var(--border));
+    }
+
+    .payment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .payment-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: hsl(var(--muted-foreground));
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: hsl(var(--muted));
+      color: hsl(var(--foreground));
+    }
+
+    .payment-body {
+      padding: 24px;
+    }
+
+    .payment-info {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .payment-info p {
+      margin: 0 0 16px 0;
+      color: hsl(var(--foreground));
+      font-size: 1rem;
+    }
+
+    .cost-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 16px 0;
+    }
+
+    .cost-amount {
+      font-size: 2rem;
+      font-weight: 700;
+      color: hsl(var(--primary));
+      text-shadow: 0 0 20px hsl(var(--primary-glow) / 0.3);
+    }
+
+    .cost-label {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .payment-note {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      margin: 16px 0 0 0 !important;
+    }
+
+    .payment-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .payment-actions .btn {
+      flex: 1;
+      max-width: 120px;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 480px) {
+      .payment-content {
+        width: 95%;
+        margin: 20px;
+      }
+      
+      .payment-header {
+        padding: 16px 20px;
+      }
+      
+      .payment-body {
+        padding: 20px;
+      }
+      
+      .cost-amount {
+        font-size: 1.75rem;
+      }
+    }
   </style>
 </head>
 
@@ -1174,6 +1302,30 @@
             <div class="loading-text">
               <h3>✨ Degenifying your situation... ✨</h3>
               <p>This is about to be absolutely fire 🔥</p>
+            </div>
+          </div>
+
+          <!-- Payment Modal -->
+          <div id="payment-modal" class="payment-modal" style="display: none;">
+            <div class="payment-content">
+              <div class="payment-header">
+                <h3>💰 Premium PFP Generation</h3>
+                <button id="close-payment-modal" class="close-btn">&times;</button>
+              </div>
+              <div class="payment-body">
+                <div class="payment-info">
+                  <p>🎩 <strong>Degenify your PFP</strong> with a stylish purple top hat!</p>
+                  <div class="cost-display">
+                    <span class="cost-amount">50 $DEGEN</span>
+                    <span class="cost-label">per generation</span>
+                  </div>
+                  <p class="payment-note">This will open your wallet to send 50 $DEGEN tokens.</p>
+                </div>
+                <div class="payment-actions">
+                  <button id="cancel-payment" class="btn btn-secondary">Cancel</button>
+                  <button id="confirm-payment" class="btn btn-primary">Pay & Generate</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1610,10 +1762,36 @@
     // Generate button handler
     generateBtn.addEventListener('click', generateImage);
 
+    // Payment modal event listeners
+    document.getElementById('close-payment-modal').addEventListener('click', hidePaymentModal);
+    document.getElementById('cancel-payment').addEventListener('click', hidePaymentModal);
+    document.getElementById('confirm-payment').addEventListener('click', handlePayment);
+
     async function generateImage() {
       const prompt = promptInput.value.trim();
       if (!prompt) return;
 
+      // For PFP mode, show payment modal first
+      if (isPfpMode) {
+        showPaymentModal();
+        return;
+      }
+
+      // For other modes, proceed directly
+      await performGeneration(prompt);
+    }
+
+    function showPaymentModal() {
+      const paymentModal = document.getElementById('payment-modal');
+      paymentModal.style.display = 'flex';
+    }
+
+    function hidePaymentModal() {
+      const paymentModal = document.getElementById('payment-modal');
+      paymentModal.style.display = 'none';
+    }
+
+    async function performGeneration(prompt) {
       // Show loading state
       generatorForm.style.display = 'none';
       loadingState.style.display = 'flex';
@@ -1713,6 +1891,78 @@
         generatorForm.style.display = 'block';
         promptInput.value = '';
         charCount.textContent = '0/500 characters';
+      }
+    }
+
+    // Payment flow functions
+    async function handlePayment() {
+      try {
+        console.log('💰 Starting payment flow...');
+        
+        // Get user's wallet address via signIn
+        const sdk = await getSdk();
+        const signInResult = await sdk.actions.signIn({ 
+          nonce: `degenify-payment-${Date.now()}`,
+          acceptAuthAddress: true
+        });
+        
+        if (!signInResult || !signInResult.message) {
+          throw new Error('Failed to get wallet address');
+        }
+        
+        // Extract wallet address from signIn message
+        const addressMatch = signInResult.message.match(/0x[a-fA-F0-9]{40}/);
+        if (!addressMatch) {
+          throw new Error('Could not extract wallet address');
+        }
+        
+        const fromAddress = addressMatch[0].toLowerCase();
+        console.log('🔍 User wallet address:', fromAddress);
+        
+        // Trigger sendToken for 50 DEGEN
+        const DEGEN_CONTRACT = '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed';
+        const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488';
+        
+        console.log('🔍 Calling sendToken...');
+        const paymentResult = await sdk.actions.sendToken({
+          to: TREASURY_ADDRESS,
+          tokenAddress: DEGEN_CONTRACT,
+          amount: '50'
+        });
+        
+        if (!paymentResult || !paymentResult.txHash) {
+          throw new Error('Payment failed or was cancelled');
+        }
+        
+        console.log('✅ Payment successful, txHash:', paymentResult.txHash);
+        
+        // Verify payment on server
+        console.log('🔍 Verifying payment...');
+        const verificationResponse = await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            txHash: paymentResult.txHash,
+            fromAddress: fromAddress,
+            expectedAmount: '50'
+          })
+        });
+        
+        const verification = await verificationResponse.json();
+        
+        if (!verification.valid) {
+          throw new Error(`Payment verification failed: ${verification.error}`);
+        }
+        
+        console.log('✅ Payment verified successfully!');
+        
+        // Hide payment modal and proceed with generation
+        hidePaymentModal();
+        await performGeneration(promptInput.value.trim());
+        
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert(`Payment failed: ${error.message}`);
       }
     }
 
