@@ -1325,7 +1325,7 @@
         const sdk = await getSdk();
         const inMini = await sdk.isInMiniApp();
         const show = !!inMini; // we'll wait for user later in getPfpUrl()
-        
+
         if (show) {
           pfpOption.style.display = 'flex';
           console.log('✅ PFP option shown - in miniapp context');
@@ -1357,30 +1357,6 @@
       return _sdk;
     }
 
-    // Check PFP visibility AFTER SDK is loaded
-    async function checkPfpVisibilityAfterSdkLoad() {
-      try {
-        const sdk = await getSdk();
-        const inMini = await sdk.isInMiniApp();
-        const show = !!inMini;
-        
-        if (show) {
-          pfpOption.style.display = 'flex';
-          console.log('✅ PFP option shown - in miniapp context');
-        } else {
-          pfpOption.style.display = 'none';
-          if (isPfpMode) {
-            isMascotMode = true;
-            isPfpMode = false;
-            updateToggleState();
-          }
-          console.log('❌ PFP option hidden - not in miniapp context');
-        }
-      } catch (error) {
-        console.log('❌ Error checking miniapp context:', error);
-        pfpOption.style.display = 'none';
-      }
-    }
 
     // Don't run early visibility check - wait for SDK
     console.log('🔍 Waiting for SDK before PFP visibility check...');
@@ -1406,7 +1382,7 @@
       const t0 = performance.now();
       while (performance.now() - t0 < maxMs) {
         const u = sdk.context?.user;
-        if (u) {
+        if (u && typeof u === 'object' && u.pfpUrl) {
           console.log('✅ User found in context:', u);
           return u;
         }
@@ -1414,6 +1390,26 @@
       }
       console.log('❌ User not found in context after timeout');
       return null;
+    }
+
+    // Safe property access for Proxy functions
+    function getProperty(obj, path) {
+      try {
+        return path.split('.').reduce((acc, key) => {
+          if (acc == null) return null;
+          const val = acc[key];
+          if (typeof val === 'function') {
+            try {
+              return val();
+            } catch {
+              return val;
+            }
+          }
+          return val;
+        }, obj);
+      } catch {
+        return null;
+      }
     }
 
     // Bulletproof PFP fetching (ChatGPT's exact solution)
@@ -1428,18 +1424,20 @@
 
       console.log('🔍 Getting PFP from context...');
 
-      // 1) viewer PFP (preferred)
+      // 1) viewer PFP (preferred) - handle Proxy functions
       const user = await waitForUser();
-      if (user?.pfpUrl) {
-        userPfpUrl = user.pfpUrl;
+      const userPfp = getProperty(user, 'pfpUrl');
+      if (userPfp) {
+        userPfpUrl = userPfp;
         console.log('✅ User PFP URL from context.user:', userPfpUrl);
         return userPfpUrl;
       }
 
-      // 2) cast author PFP (if launched from a cast)
-      const author = sdk.context?.location?.cast?.author;
-      if (author?.pfpUrl) {
-        userPfpUrl = author.pfpUrl;
+      // 2) cast author PFP (if launched from a cast) - handle Proxy functions
+      const author = getProperty(sdk.context, 'location.cast.author');
+      const authorPfp = getProperty(author, 'pfpUrl');
+      if (authorPfp) {
+        userPfpUrl = authorPfp;
         console.log('✅ User PFP URL from cast author:', userPfpUrl);
         return userPfpUrl;
       }
@@ -1452,7 +1450,7 @@
         console.log('⚠️ Sign in failed:', e);
       }
 
-      const pfp = sdk.context?.user?.pfpUrl;
+      const pfp = getProperty(sdk.context, 'user.pfpUrl');
       if (pfp) {
         userPfpUrl = pfp;
         console.log('✅ User PFP URL after sign in:', userPfpUrl);
@@ -2097,17 +2095,16 @@ Create yours on www.degenify.xyz`;
 
         // Also update PFP option visibility and initialize PFP
         await updatePfpVisibility();
-        await checkPfpVisibilityAfterSdkLoad();
         await initializeUserPfp();
       };
 
       // Initial check
       updateButtonVisibility();
 
-      // AGGRESSIVE RETRIES: Check every 200ms for 10 seconds for SDK loading
-      console.log('🔄 Setting up aggressive retry logic for SDK loading');
+      // MODERATE RETRIES: Check every 500ms for 5 seconds for SDK loading
+      console.log('🔄 Setting up retry logic for SDK loading');
       let attempts = 0;
-      const maxAttempts = 50; // 10 seconds / 200ms
+      const maxAttempts = 10; // 5 seconds / 500ms
       const retryInterval = setInterval(async () => {
         attempts++;
         console.log(`🔄 SDK retry attempt ${attempts}/${maxAttempts}`);
@@ -2118,7 +2115,7 @@ Create yours on www.degenify.xyz`;
           clearInterval(retryInterval);
           console.log('🔄 SDK retry stopped:', window.farcaster?.actions?.addMiniApp ? 'SDK loaded' : 'Max attempts reached');
         }
-      }, 200);
+      }, 500);
 
       // Mobile-specific ready() solution - wait for full SDK initialization
       let readyCallCount = 0;
