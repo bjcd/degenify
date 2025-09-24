@@ -1619,14 +1619,6 @@
       loadingState.style.display = 'flex';
       resultContainer.style.display = 'none';
 
-      // Update loading message with rotating hat for all modes
-      if (isPfpMode) {
-        loadingState.innerHTML = '<div class="loading-spinner rotating-hat"></div><p>Degenifying your PFP... This may take a moment</p>';
-      } else {
-        // For Mascot and Cyberpunk modes, also show rotating hat
-        loadingState.innerHTML = '<div class="loading-spinner rotating-hat"></div><p>Degenifying your situation... This may take a moment</p>';
-      }
-
       try {
         // Validate and fetch PFP URL for PFP mode BEFORE creating request body
         if (isPfpMode && !userPfpUrl) {
@@ -1692,7 +1684,7 @@
           if (attempt < maxRetries) {
             console.log(`⏳ Waiting 1 second before retry ${attempt + 1}...`);
 
-            // Update loading message to show retry
+            // Update loading message to show retry (keep original rotating hat)
             if (isPfpMode) {
               loadingState.innerHTML = `<div class="loading-spinner rotating-hat"></div><p>Retrying PFP generation... Attempt ${attempt + 1}/${maxRetries}</p>`;
             }
