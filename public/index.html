@@ -1384,33 +1384,33 @@
           // Get the user's FID from context
           const context = await window.farcaster.context();
           console.log('🔍 Farcaster context:', context);
-          
+
           if (context.user && context.user.fid) {
             const fid = context.user.fid;
             console.log('🔍 User FID:', fid);
-            
+
             // Try to get PFP URL directly from context first
             if (context.user.pfpUrl) {
               userPfpUrl = context.user.pfpUrl;
               console.log('✅ User PFP URL from context:', userPfpUrl);
               return userPfpUrl;
             }
-            
+
             // If not in context, try to query Farcaster Hub API directly
             try {
               const hubUrl = 'https://hub-api.neynar.com'; // Use Neynar's public hub
               const response = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`);
-              
+
               if (response.ok) {
                 const data = await response.json();
                 console.log('🔍 Hub API response:', data);
-                
+
                 if (data.messages && data.messages.length > 0) {
                   // Look for pfp data in the messages
-                  const pfpMessage = data.messages.find(msg => 
+                  const pfpMessage = data.messages.find(msg =>
                     msg.data && msg.data.userDataBody && msg.data.userDataBody.type === 'USER_DATA_TYPE_PFP'
                   );
-                  
+
                   if (pfpMessage && pfpMessage.data.userDataBody.value) {
                     userPfpUrl = pfpMessage.data.userDataBody.value;
                     console.log('✅ User PFP URL from Hub API:', userPfpUrl);
@@ -1421,7 +1421,7 @@
             } catch (hubError) {
               console.log('❌ Hub API error:', hubError);
             }
-            
+
             console.log('❌ No pfpUrl found in context or Hub API');
             return null;
           } else {
@@ -1440,6 +1440,7 @@
 
     // Try to fetch user PFP when in miniapp context - use official SDK methods directly
     async function initializeUserPfp() {
+      console.log('🔍 initializeUserPfp called');
       try {
         // Use official Farcaster SDK methods directly (as per documentation)
         let isInMiniApp = false;
@@ -1454,6 +1455,7 @@
         }
 
         if (isInMiniApp) {
+          console.log('🔍 In miniapp, fetching PFP...');
           const pfp = await fetchUserPfp();
           if (!pfp) {
             console.log('❌ Could not fetch user PFP from Farcaster SDK');
@@ -1461,9 +1463,12 @@
             pfpOption.style.opacity = '0.5';
             pfpOption.title = 'PFP not available - could not fetch from Farcaster';
           } else {
+            console.log('✅ PFP fetched successfully:', pfp);
             pfpOption.style.opacity = '1';
             pfpOption.title = 'Degenify your profile picture';
           }
+        } else {
+          console.log('🔍 Not in miniapp, skipping PFP fetch');
         }
       } catch (error) {
         console.log('❌ Error in initializeUserPfp:', error);
@@ -1480,6 +1485,8 @@
         await originalUpdateButtonVisibility();
         try {
           await updatePfpVisibility();
+          // Also try to initialize PFP when SDK is ready
+          await initializeUserPfp();
         } catch (error) {
           console.log('❌ Error in updatePfpVisibility from retry:', error);
         }
