@@ -1070,7 +1070,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1338,13 +1338,13 @@
 
         if (window.farcaster && window.farcaster.context) {
           try {
-            // Read context directly (no parentheses - it's a property!)
-            const ctx = window.farcaster.context;
+            // Use safe context access
+            const ctx = safeContext();
             console.log('🔍 Raw SDK context:', ctx);
             
-            // Extract platform and client values properly
-            platform = typeof ctx.platform === 'function' ? 'web' : (ctx.platform || 'web');
-            client = typeof ctx.client === 'function' ? null : (ctx.client?.id || null);
+            // Extract platform and client values safely
+            platform = getSafe(ctx, 'platform', 'web');
+            client = getSafe(ctx, 'client.id', null);
             console.log('🔍 SDK context values:', { platform, client });
           } catch (error) {
             console.log('❌ context access failed:', error);
@@ -1381,39 +1381,108 @@
     updatePfpVisibility();
 
 
-    // Fetch user's PFP from sdk.context directly (no parentheses!)
+    // Safe context access helper
+    function safeContext() {
+      const raw = window.farcaster?.context;
+      if (typeof raw === 'function') {
+        try { 
+          return raw(); 
+        } catch { 
+          return raw; 
+        }
+      }
+      return raw;
+    }
+
+    // Safe property access helper
+    function getSafe(obj, path, defaultValue = null) {
+      return path.split('.').reduce((acc, key) => {
+        if (acc == null) return null;
+        const v = acc[key];
+        if (typeof v === 'function') {
+          try { 
+            return v(); 
+          } catch { 
+            return v; 
+          }
+        }
+        return v;
+      }, obj) ?? defaultValue;
+    }
+
+    // Wait for user to be populated in context
+    async function waitForUser(maxMs = 3000) {
+      const t0 = performance.now();
+      while (performance.now() - t0 < maxMs) {
+        const ctx = safeContext();
+        const user = getSafe(ctx, 'user');
+        if (user) {
+          console.log('✅ User found in context:', user);
+          return user;
+        }
+        await new Promise(r => setTimeout(r, 50));
+      }
+      console.log('❌ User not found in context after timeout');
+      return null;
+    }
+
+    // Fetch user's PFP with proper waiting and fallbacks
     async function fetchUserPfp() {
       try {
-        if (window.farcaster && window.farcaster.context) {
-          console.log('🔍 Getting PFP from sdk.context directly...');
-
-          // Read sdk.context directly (no parentheses - it's a property!)
-          const context = window.farcaster.context;
-          console.log('🔍 Farcaster context:', context);
-
-          // Try to get PFP from context.user.pfpUrl
-          if (context?.user?.pfpUrl) {
-            userPfpUrl = context.user.pfpUrl;
-            console.log('✅ User PFP URL from context.user:', userPfpUrl);
-            return userPfpUrl;
-          }
-
-          // Fallback: try to get PFP from cast author if launched from a cast
-          if (context?.location?.type === 'cast_embed' || context?.location?.type === 'cast_share') {
-            const fallbackPfp = context.location.cast?.author?.pfpUrl;
-            if (fallbackPfp) {
-              userPfpUrl = fallbackPfp;
-              console.log('✅ User PFP URL from cast author:', userPfpUrl);
-              return userPfpUrl;
-            }
-          }
-
-          console.log('❌ No pfpUrl found in context.user or cast author');
-          return null;
-        } else {
+        if (!window.farcaster) {
           console.log('❌ Farcaster SDK not available');
           return null;
         }
+
+        console.log('🔍 Getting PFP from sdk.context...');
+        
+        // Ensure we're in a miniapp
+        const isInMini = await window.farcaster.isInMiniApp();
+        if (!isInMini) {
+          console.log('❌ Not in miniapp context');
+          return null;
+        }
+
+        // Wait for SDK to be ready
+        try { 
+          await window.farcaster.actions.ready?.(); 
+        } catch (e) {
+          console.log('⚠️ SDK ready() failed:', e);
+        }
+
+        // Wait for user to be populated
+        const user = await waitForUser();
+        if (user?.pfpUrl) {
+          userPfpUrl = user.pfpUrl;
+          console.log('✅ User PFP URL from context.user:', userPfpUrl);
+          return userPfpUrl;
+        }
+
+        // Fallback: try to get PFP from cast author if launched from a cast
+        const ctx = safeContext();
+        const castAuthor = getSafe(ctx, 'location.cast.author');
+        if (castAuthor?.pfpUrl) {
+          userPfpUrl = castAuthor.pfpUrl;
+          console.log('✅ User PFP URL from cast author:', userPfpUrl);
+          return userPfpUrl;
+        }
+
+        // Last resort: try to sign in
+        try {
+          console.log('🔍 Attempting sign in...');
+          await window.farcaster.actions.signIn?.();
+          const userAfterSignIn = getSafe(safeContext(), 'user');
+          if (userAfterSignIn?.pfpUrl) {
+            userPfpUrl = userAfterSignIn.pfpUrl;
+            console.log('✅ User PFP URL after sign in:', userPfpUrl);
+            return userPfpUrl;
+          }
+        } catch (signInError) {
+          console.log('❌ Sign in failed:', signInError);
+        }
+        
+        console.log('❌ No pfpUrl found after all attempts');
+        return null;
       } catch (error) {
         console.log('❌ Error fetching user PFP:', error);
         return null;
@@ -1828,12 +1897,12 @@ $DEGEN @degentokenbase`;
 
       if (window.farcaster && window.farcaster.context) {
         try {
-          const ctx = await window.farcaster.context();
+          const ctx = window.farcaster.context;
           platform = ctx.platform || 'web';
           client = ctx.client?.id || null;
-          console.log('🔍 SDK context():', { platform, client });
+          console.log('🔍 SDK context:', { platform, client });
         } catch (error) {
-          console.log('❌ context() failed:', error);
+          console.log('❌ context access failed:', error);
         }
       }
 
