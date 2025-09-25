@@ -59,16 +59,17 @@ const GOOGLE_API_BASE = process.env.GOOGLE_API_BASE || 'https://generativelangua
 
 // Payment verification constants
 const DEGEN_CONTRACT = '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed'.toLowerCase();
-const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488'.toLowerCase();
+const TREASURY_ADDRESS = (process.env.TREASURY_ADDRESS || '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488').toLowerCase();
 const DEGEN_COST = '50'; // 50 DEGEN tokens
 const BASE_RPC_URL = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+const PFP_PAID = process.env.PFP_PAID === 'TRUE'; // TRUE = paid, FALSE = free
 
 // Initialize Base provider
 const provider = new ethers.JsonRpcProvider(BASE_RPC_URL);
 
 // ERC-20 Transfer event interface
 const ERC20_IFACE = new ethers.Interface([
-  'event Transfer(address indexed from, address indexed to, uint256 value)'
+    'event Transfer(address indexed from, address indexed to, uint256 value)'
 ]);
 
 // Configure Cloudinary
@@ -210,9 +211,9 @@ app.post('/api/degenify-pfp', async (req, res) => {
     try {
         console.log('🔍 PFP degenify request received');
         console.log('🔍 Request body:', JSON.stringify(req.body, null, 2));
-        
+
         const { prompt, pfpUrl, promptContext } = req.body || {};
-        
+
         if (!prompt) {
             console.log('❌ Missing prompt');
             return res.status(400).json({ error: 'prompt required' });
@@ -221,7 +222,7 @@ app.post('/api/degenify-pfp', async (req, res) => {
             console.log('❌ Missing pfpUrl');
             return res.status(400).json({ error: 'pfpUrl required' });
         }
-        
+
         console.log('✅ PFP degenify request valid:', { prompt: prompt.substring(0, 50) + '...', pfpUrl, promptContext: promptContext?.substring(0, 50) + '...' });
 
         if (!GOOGLE_API_KEY) {
@@ -286,7 +287,7 @@ Situation to create: ${prompt}`;
             console.error('❌ Google API error:', aiRes.status, errorText);
             return res.status(500).json({ error: 'Google API error', details: errorText });
         }
-        
+
         console.log('✅ Google AI API request successful');
 
         const aiData = await aiRes.json();
@@ -1277,13 +1278,22 @@ app.get('/api/download/:id', async (req, res) => {
     }
 });
 
+// Check if PFP generation requires payment
+app.get('/api/pfp-payment-status', (req, res) => {
+    res.json({
+        requiresPayment: PFP_PAID,
+        treasuryAddress: TREASURY_ADDRESS,
+        degenCost: DEGEN_COST
+    });
+});
+
 // Payment verification endpoint
 app.post('/api/verify-payment', async (req, res) => {
     try {
         console.log('🔍 Payment verification request:', req.body);
-        
+
         const { txHash, fromAddress, expectedAmount } = req.body || {};
-        
+
         if (!txHash || !fromAddress || !expectedAmount) {
             console.log('❌ Missing payment parameters');
             return res.status(400).json({ valid: false, error: 'Missing parameters' });
@@ -1310,11 +1320,11 @@ app.post('/api/verify-payment', async (req, res) => {
         const logs = tx.logs
             .filter(l => (l.address || "").toLowerCase() === DEGEN_CONTRACT)
             .map(l => {
-                try { 
-                    return ERC20_IFACE.parseLog(l); 
-                } catch (e) { 
+                try {
+                    return ERC20_IFACE.parseLog(l);
+                } catch (e) {
                     console.log('Failed to parse log:', e.message);
-                    return null; 
+                    return null;
                 }
             })
             .filter(Boolean);
@@ -1324,13 +1334,13 @@ app.post('/api/verify-payment', async (req, res) => {
         // Look for Transfer to our treasury from the specified address
         const match = logs.find((ev) => {
             if (ev?.name !== 'Transfer') return false;
-            
+
             const to = ev.args?.to?.toLowerCase();
             const from = ev.args?.from?.toLowerCase();
-            
+
             console.log(`🔍 Checking Transfer: from ${from} to ${to}`);
             console.log(`🔍 Expected: from ${fromAddress.toLowerCase()} to ${TREASURY_ADDRESS}`);
-            
+
             return to === TREASURY_ADDRESS && from === fromAddress.toLowerCase();
         });
 
@@ -1342,9 +1352,9 @@ app.post('/api/verify-payment', async (req, res) => {
         // Check amount
         const paid = match.args.value;
         const required = ethers.parseUnits(expectedAmount, 18);
-        
+
         console.log(`🔍 Paid: ${paid.toString()}, Required: ${required.toString()}`);
-        
+
         if (paid < required) {
             console.log('❌ Insufficient payment amount');
             return res.status(200).json({ valid: false, error: 'Insufficient payment amount' });

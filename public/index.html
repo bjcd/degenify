@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -1591,6 +1591,9 @@
       };
     }
 
+    // Check PFP payment status on page load
+    checkPfpPaymentStatus();
+
     // Example button handlers
     document.querySelectorAll('.example-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1738,6 +1741,21 @@
 
     // Payment state to prevent multiple simultaneous attempts
     let isPaymentInProgress = false;
+    let pfpPaymentRequired = true; // Will be updated from server
+
+    // Check PFP payment status from server
+    async function checkPfpPaymentStatus() {
+      try {
+        const response = await fetch('/api/pfp-payment-status');
+        const data = await response.json();
+        pfpPaymentRequired = data.requiresPayment;
+        console.log('🔍 PFP Payment Status:', data);
+      } catch (error) {
+        console.error('❌ Failed to check payment status:', error);
+        // Default to paid if check fails
+        pfpPaymentRequired = true;
+      }
+    }
 
     // Native PFP payment flow
     async function handlePfpPayment(prompt) {
@@ -1748,6 +1766,14 @@
 
       try {
         isPaymentInProgress = true;
+
+        // Check if payment is required
+        if (!pfpPaymentRequired) {
+          console.log('🎉 PFP generation is FREE! Skipping payment...');
+          await performGeneration(prompt);
+          return;
+        }
+
         console.log('💰 Starting native PFP payment flow...');
 
         // Get user's wallet address via signIn
