@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-        </div>
+  </div>
       </div>
     </header>
 
@@ -1240,14 +1240,17 @@
     let userPfpUrl = null; // Store user's PFP URL
 
     // Character count update and button state
-    promptInput.addEventListener('input', () => {
+    function updateCharCount() {
       const count = promptInput.value.length;
-      charCount.textContent = `${count}/500 characters`;
+      const maxLength = promptInput.maxLength;
+      charCount.textContent = `${count}/${maxLength} characters`;
 
       // Enable/disable button based on input
       generateBtn.disabled = count === 0;
-      console.log('Input changed, count:', count, 'disabled:', generateBtn.disabled);
-    });
+      console.log('Input changed, count:', count, 'maxLength:', maxLength, 'disabled:', generateBtn.disabled);
+    }
+
+    promptInput.addEventListener('input', updateCharCount);
 
     // Mascot toggle functionality
     function updateToggleState() {
@@ -1259,6 +1262,8 @@
         currentBaseImage = 'base.png';
         currentPromptContext = 'A cute purple hat character with a friendly face, wearing a stylish purple top hat. The character should always maintain the distinctive purple hat while the pose, expression, and clothing can be modified.';
         promptInput.placeholder = "Describe any wild situation... (e.g., 'riding a dragon through neon city')";
+        promptInput.maxLength = 500;
+        updateCharCount(); // Update display with correct limit
       } else if (isPfpMode) {
         mascotToggle.classList.add('active');
         mascotOption.classList.remove('active');
@@ -1267,6 +1272,8 @@
         currentBaseImage = userPfpUrl || 'base.png'; // Use user's PFP or fallback
         currentPromptContext = 'Add a stylish purple top hat to this person\'s profile picture. The purple top hat must be prominent and well-integrated with their appearance. Maintain their facial features and overall look while adding the distinctive purple hat. Make it look natural and stylish.';
         promptInput.placeholder = "Describe the style for your degenified PFP... (e.g., 'cyberpunk style', 'elegant formal look')";
+        promptInput.maxLength = 100; // PFP mode: 100 character limit
+        updateCharCount(); // Update display with correct limit
       } else {
         mascotToggle.classList.add('active');
         mascotOption.classList.remove('active');
@@ -1275,6 +1282,8 @@
         currentBaseImage = 'base-cyberpunk.png';
         currentPromptContext = 'A cinematic hyper-realistic 3D render of a deep velvet purple top hat with a gold band. The purple top hat must ALWAYS be visible and prominent in the image. Set in a neon cyberpunk atmosphere with rich textures, dramatic lighting, glowing purple energy, cinematic depth of field, futuristic gritty environment, and moody atmosphere. The hat should be the focal point of the composition.';
         promptInput.placeholder = "Describe any wild situation... (e.g., 'riding a dragon through neon city')";
+        promptInput.maxLength = 500;
+        updateCharCount(); // Update display with correct limit
       }
     }
 
@@ -1594,12 +1603,15 @@
     // Check PFP payment status on page load
     checkPfpPaymentStatus();
 
+    // Initialize character count display
+    updateCharCount();
+
     // Example button handlers
     document.querySelectorAll('.example-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const prompt = btn.dataset.prompt;
         promptInput.value = prompt;
-        charCount.textContent = `${prompt.length}/500 characters`;
+        updateCharCount(); // Use the dynamic function
         generateBtn.disabled = false; // Enable button when example is selected
         promptInput.focus();
       });
@@ -1810,7 +1822,7 @@
         // Trigger native sendToken for 50 DEGEN to treasury wallet
         const DEGEN_CONTRACT = 'eip155:8453/erc20:0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed'; // CAIP-19 format for DEGEN on Base
         const DEGEN_AMOUNT = '50000000000000000000'; // 50 DEGEN with 18 decimals
-        
+
         // Get treasury address from server (set in environment variables)
         if (!treasuryAddress) {
           throw new Error('Treasury address not available. Please refresh and try again.');
@@ -1822,7 +1834,7 @@
           amount: DEGEN_AMOUNT,
           recipientAddress: treasuryAddress
         });
-        
+
         console.log('🔍 About to call sdk.actions.sendToken...');
         try {
           const paymentResult = await sdk.actions.sendToken({
