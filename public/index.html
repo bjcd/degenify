@@ -1742,6 +1742,7 @@
     // Payment state to prevent multiple simultaneous attempts
     let isPaymentInProgress = false;
     let pfpPaymentRequired = true; // Will be updated from server
+    let treasuryAddress = null; // Will be updated from server
 
     // Check PFP payment status from server
     async function checkPfpPaymentStatus() {
@@ -1749,6 +1750,7 @@
         const response = await fetch('/api/pfp-payment-status');
         const data = await response.json();
         pfpPaymentRequired = data.requiresPayment;
+        treasuryAddress = data.treasuryAddress;
         console.log('🔍 PFP Payment Status:', data);
       } catch (error) {
         console.error('❌ Failed to check payment status:', error);
@@ -1808,21 +1810,25 @@
         // Trigger native sendToken for 50 DEGEN to treasury wallet
         const DEGEN_CONTRACT = 'eip155:8453/erc20:0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed'; // CAIP-19 format for DEGEN on Base
         const DEGEN_AMOUNT = '50000000000000000000'; // 50 DEGEN with 18 decimals
-        const TREASURY_ADDRESS = '0xe5E5e732d94e306ad3a30F33ffe4dA809f177488';
+        
+        // Get treasury address from server (set in environment variables)
+        if (!treasuryAddress) {
+          throw new Error('Treasury address not available. Please refresh and try again.');
+        }
 
         console.log('🔍 Opening native wallet for 50 $DEGEN payment to treasury...');
         console.log('🔍 SDK sendToken params:', {
           token: DEGEN_CONTRACT,
           amount: DEGEN_AMOUNT,
-          recipientAddress: TREASURY_ADDRESS
+          recipientAddress: treasuryAddress
         });
-
+        
         console.log('🔍 About to call sdk.actions.sendToken...');
         try {
           const paymentResult = await sdk.actions.sendToken({
             token: DEGEN_CONTRACT,
             amount: DEGEN_AMOUNT,
-            recipientAddress: TREASURY_ADDRESS
+            recipientAddress: treasuryAddress
           });
 
           console.log('✅ Payment dialog opened successfully:', paymentResult);
