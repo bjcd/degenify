@@ -33,7 +33,7 @@
     "version": "1",
     "imageUrl": "https://www.degenify.xyz/miniapp-icon-large.png",
     "button": {
-      "title": "Open mini app",
+      "title": "Degenify 🎩✨",
       "action": {
         "type": "launch_frame",
         "name": "Degenify",
@@ -1077,7 +1077,7 @@
             </svg>
             Add miniapp to Farcaster
           </button>
-  </div>
+        </div>
       </div>
     </header>
 
@@ -2147,10 +2147,10 @@ $DEGEN @degentokenbase`;
 
     // Share to Farcaster - make globally accessible
     window.shareToFarcaster = async function (imageId) {
-      const shareUrl = `${window.location.origin}/api/share/${imageId}`;
+      const farcasterEmbedUrl = `${window.location.origin}/api/farcaster-embed/${imageId}`;
       const text = `Check out this epic degeneration I created with Degenify! 🎩 🔥 
 
-${shareUrl}
+${farcasterEmbedUrl}
 
 $DEGEN /degen 
 Create yours on www.degenify.xyz`;
@@ -2165,7 +2165,7 @@ Create yours on www.degenify.xyz`;
         try {
           const result = window.farcaster.actions.composeCast({
             text: text,
-            embeds: [shareUrl]
+            embeds: [farcasterEmbedUrl]
           });
 
           if (result && typeof result.then === 'function') {

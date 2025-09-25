@@ -469,6 +469,160 @@ app.get('/api/image/:id', async (req, res) => {
     }
 });
 
+// API endpoint for dynamic Farcaster embed with generated image
+app.get('/api/farcaster-embed/:id', async (req, res) => {
+    try {
+        const imageId = req.params.id;
+        const result = await pool.query('SELECT * FROM images WHERE id = $1', [imageId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send('Image not found');
+        }
+
+        const image = result.rows[0];
+        const imageUrl = `${req.protocol}://${req.get('host')}/api/image/${imageId}`;
+        // Add cache-busting parameter to force Farcaster to refresh image cache
+        const cloudinaryUrl = `${image.cloudinary_url}?t=${Date.now()}`;
+
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate yours with Degenify 🎩✨</title>
+    <meta name="description" content="Check out this epic degeneration! Generate yours with Degenify 🎩✨">
+    <link rel="icon" type="image/png" href="/hat-logo.png">
+    
+    <!-- Farcaster Mini App Meta Tags with Generated Image -->
+    <meta name="fc:miniapp" content='{
+        "version": "1",
+        "imageUrl": "${cloudinaryUrl}",
+        "button": {
+            "title": "Generate yours 🎩✨",
+            "action": {
+                "type": "launch_frame",
+                "name": "Degenify",
+                "url": "https://www.degenify.xyz",
+                "splashImageUrl": "https://www.degenify.xyz/miniapp-icon.png",
+                "splashBackgroundColor": "#e8d3f4"
+            }
+        }
+    }'>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${req.protocol}://${req.get('host')}/api/farcaster-embed/${imageId}">
+    <meta property="og:title" content="Generate yours with Degenify 🎩✨">
+    <meta property="og:description" content="Check out this epic degeneration! Generate yours with Degenify 🎩✨">
+    <meta property="og:image" content="${cloudinaryUrl}">
+    <meta property="og:image:url" content="${cloudinaryUrl}">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="1024">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:alt" content="Epic Degeneration by Degenify">
+    <meta property="og:site_name" content="Degenify">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@degentokenbase">
+    <meta name="twitter:creator" content="@degentokenbase">
+    <meta name="twitter:url" content="${req.protocol}://${req.get('host')}/api/farcaster-embed/${imageId}">
+    <meta name="twitter:title" content="Generate yours with Degenify 🎩✨">
+    <meta name="twitter:description" content="Check out this epic degeneration! Generate yours with Degenify 🎩✨">
+    <meta name="twitter:image" content="${cloudinaryUrl}">
+    <meta name="twitter:image:alt" content="Epic Degeneration by Degenify">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        .image {
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .title {
+            font-size: 2.5em;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .cta-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .prompt {
+            font-style: italic;
+            color: #888;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="${cloudinaryUrl}" alt="Generated Degeneration" class="image">
+        <h1 class="title">Generate yours! 🎩✨</h1>
+        <p class="subtitle">Check out this epic degeneration created with Degenify!<br>Create your own unique masterpiece now.</p>
+        <a href="https://www.degenify.xyz" class="cta-button">Start Creating 🚀</a>
+        <div class="prompt">"${image.prompt}"</div>
+    </div>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
+});
+
 // API endpoint to serve image with Open Graph meta tags (for social media previews)
 app.get('/api/share/:id', async (req, res) => {
     try {
