@@ -50,9 +50,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
-let MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-image-preview';
-if (MODEL_ID === 'gemini-2.5-flash-image') {
-    MODEL_ID = 'gemini-2.5-flash-image-preview';
+let MODEL_ID = process.env.MODEL_ID || 'gemini-2.5-flash-image';
+// Backwards compatibility: map deprecated preview model to the current image model
+if (MODEL_ID === 'gemini-2.5-flash-image-preview') {
+    MODEL_ID = 'gemini-2.5-flash-image';
 }
 const BASE_IMAGE_PATH = process.env.BASE_IMAGE_PATH || 'public/base.png';
 const GOOGLE_API_BASE = process.env.GOOGLE_API_BASE || 'https://generativelanguage.googleapis.com';
